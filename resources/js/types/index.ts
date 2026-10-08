@@ -1,0 +1,84 @@
+export type CompanyStatus = 'active' | 'inactive';
+
+export interface Company {
+    id: number;
+    name: string;
+    slug: string;
+    email: string | null;
+    phone: string | null;
+    logo: string | null;
+    status: CompanyStatus;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    email_verified_at: string | null;
+    is_email_verified: boolean;
+    companies?: Company[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ApiResponse<T = unknown> {
+    success: boolean;
+    message: string;
+    data: T;
+    errors?: Record<string, string[]>;
+}
+
+export interface ApiError {
+    success: boolean;
+    message: string;
+    errors: Record<string, string[]>;
+}
+
+export interface Pagination<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+}
+
+export interface LoginPayload {
+    email: string;
+    password: string;
+    device_name?: string;
+}
+
+export interface RegisterPayload {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    company_name?: string;
+}
+
+export interface ForgotPasswordPayload {
+    email: string;
+}
+
+export interface ResetPasswordPayload {
+    token: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+}
+
+export interface VerifyEmailPayload {
+    id: number;
+    hash: string;
+}
+
+export interface CreateCompanyPayload {
+    name: string;
+    email?: string;
+    phone?: string;
+}
