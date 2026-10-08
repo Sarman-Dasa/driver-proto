@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCompanyStore } from '@/stores/company';
+import { usePermissionsStore } from '@/stores/permissions';
+import { useSubscriptionStore } from '@/stores/subscription';
 
 const routes: RouteRecordRaw[] = [
     {
@@ -156,6 +158,15 @@ router.beforeEach(async (to, _from, next) => {
                     return next({ name: 'companies' });
                 }
                 return next({ name: 'companies.create' });
+            }
+
+            const permissionsStore = usePermissionsStore();
+            const subscriptionStore = useSubscriptionStore();
+            if (!permissionsStore.role && !permissionsStore.loading && companyStore.currentCompany) {
+                await permissionsStore.fetchAuthorization(companyStore.currentCompany.id);
+            }
+            if (!subscriptionStore.currentPlan && !subscriptionStore.loading && companyStore.currentCompany) {
+                await subscriptionStore.fetchPlan(companyStore.currentCompany.id);
             }
         }
     }

@@ -23,11 +23,13 @@ export const useCompanyStore = defineStore('company', () => {
             permissionsStore.fetchAuthorization(company.id);
             subscriptionStore.fetchPlan(company.id);
             customerStore.clear();
+            productStore.clear();
         } else {
             localStorage.removeItem('billflow_current_company_id');
             permissionsStore.clear();
             subscriptionStore.clear();
             customerStore.clear();
+            productStore.clear();
         }
     };
 
@@ -55,7 +57,7 @@ export const useCompanyStore = defineStore('company', () => {
             if (savedCompanyId) {
                 const found = companies.value.find((c) => String(c.id) === savedCompanyId);
                 if (found && found.is_active) {
-                    currentCompany.value = found;
+                    setCurrentCompany(found);
                 } else {
                     // Stored company is no longer member or is inactive: recover with first active
                     const firstActive = companies.value.find((c) => c.is_active) || null;
