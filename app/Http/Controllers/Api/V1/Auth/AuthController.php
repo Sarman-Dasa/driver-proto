@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Actions\Auth\AuthenticateUserAction;
+use App\Actions\Auth\ChangePasswordAction;
 use App\Actions\Auth\RegisterUserAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Auth\ChangePasswordRequest;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\User;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -43,11 +47,18 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle user logout and revoke current access token.
+     * Handle user logout and revoke current access token and session.
      */
     public function logout(Request $request): JsonResponse
     {
         $request->user()?->currentAccessToken()?->delete();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        Auth::guard('web')->logout();
 
         return ApiResponse::success(null, 'Logged out successfully.');
     }
@@ -63,5 +74,18 @@ class AuthController extends Controller
             new UserResource($user),
             'Current user retrieved successfully.',
         );
+    }
+
+    /**
+     * Change password for the authenticated user.
+     */
+    public function changePassword(ChangePasswordRequest $request, ChangePasswordAction $action): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $action->execute($user, $request->validated());
+
+        return ApiResponse::success(null, 'Password changed successfully.');
     }
 }

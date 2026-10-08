@@ -8,6 +8,9 @@ import type {
     ForgotPasswordPayload,
     ResetPasswordPayload,
     VerifyEmailPayload,
+    ChangePasswordPayload,
+    UpdateProfilePayload,
+    VerifyEmailChangePayload,
     ApiResponse,
 } from '@/types';
 
@@ -115,6 +118,59 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
+    const resendVerification = async (): Promise<string> => {
+        loading.value = true;
+        try {
+            const response = await apiClient.post<ApiResponse<null>>('/auth/email/resend');
+            return response.data.message;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const changePassword = async (payload: ChangePasswordPayload): Promise<string> => {
+        loading.value = true;
+        try {
+            const response = await apiClient.post<ApiResponse<null>>('/auth/change-password', payload);
+            return response.data.message;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const updateProfile = async (payload: UpdateProfilePayload): Promise<string> => {
+        loading.value = true;
+        try {
+            const response = await apiClient.put<ApiResponse<User>>('/profile', payload);
+            user.value = response.data.data;
+            return response.data.message;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const verifyEmailChange = async (payload: VerifyEmailChangePayload): Promise<string> => {
+        loading.value = true;
+        try {
+            const response = await apiClient.post<ApiResponse<User>>('/profile/verify-email-change', payload);
+            user.value = response.data.data;
+            return response.data.message;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const cancelPendingEmail = async (): Promise<string> => {
+        loading.value = true;
+        try {
+            const response = await apiClient.delete<ApiResponse<User>>('/profile/pending-email');
+            user.value = response.data.data;
+            return response.data.message;
+        } finally {
+            loading.value = false;
+        }
+    };
+
     return {
         user,
         token,
@@ -128,5 +184,10 @@ export const useAuthStore = defineStore('auth', () => {
         forgotPassword,
         resetPassword,
         verifyEmail,
+        resendVerification,
+        changePassword,
+        updateProfile,
+        verifyEmailChange,
+        cancelPendingEmail,
     };
 });

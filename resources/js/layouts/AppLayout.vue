@@ -29,6 +29,14 @@
                     :to="{ name: 'onboarding' }"
                     color="primary"
                 ></v-list-item>
+
+                <v-list-item
+                    prepend-icon="mdi-account-cog-outline"
+                    title="Profile Settings"
+                    value="profile"
+                    :to="{ name: 'profile' }"
+                    color="primary"
+                ></v-list-item>
             </v-list>
         </v-navigation-drawer>
 
@@ -126,6 +134,12 @@
                     </div>
                     <v-divider class="my-1"></v-divider>
                     <v-list density="compact">
+                        <v-list-item
+                            prepend-icon="mdi-account-cog-outline"
+                            title="Profile Settings"
+                            :to="{ name: 'profile' }"
+                            rounded="lg"
+                        ></v-list-item>
                         <v-list-item
                             prepend-icon="mdi-logout"
                             title="Sign out"

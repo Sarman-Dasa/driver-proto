@@ -19,16 +19,16 @@ class PasswordResetController extends Controller
 {
     /**
      * Send a password reset link to the given user.
+     * Always returns generic response to prevent account enumeration.
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        $status = Password::sendResetLink($request->only('email'));
+        Password::sendResetLink($request->only('email'));
 
-        if ($status === Password::RESET_LINK_SENT) {
-            return ApiResponse::success(null, __($status));
-        }
-
-        return ApiResponse::error(__($status), [], 400);
+        return ApiResponse::success(
+            null,
+            'If an account exists with that email address, a password reset link has been sent.',
+        );
     }
 
     /**
@@ -43,6 +43,9 @@ class PasswordResetController extends Controller
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                // Revoke all existing Sanctum tokens on password reset to prevent stolen sessions
+                $user->tokens()->delete();
 
                 event(new PasswordReset($user));
             },

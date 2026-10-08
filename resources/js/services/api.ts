@@ -34,9 +34,14 @@ apiClient.interceptors.response.use(
     (error: AxiosError<ApiError>) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('billflow_token');
-            // Only redirect if not already on an auth page
+            localStorage.removeItem('billflow_current_company_id');
+
+            // Only redirect if not already on a guest auth page to avoid redirect loops
             const currentPath = window.location.pathname;
-            if (!currentPath.startsWith('/login') && !currentPath.startsWith('/register')) {
+            const guestPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+            const isGuestPath = guestPaths.some((path) => currentPath.startsWith(path));
+
+            if (!isGuestPath) {
                 window.location.href = '/login';
             }
         }

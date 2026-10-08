@@ -17,6 +17,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    pending_email?: string | null;
     email_verified_at: string | null;
     is_email_verified: boolean;
     companies?: Company[];
@@ -75,6 +76,25 @@ export interface ResetPasswordPayload {
 export interface VerifyEmailPayload {
     id: number;
     hash: string;
+    expires?: number;
+    signature?: string;
+}
+
+export interface ChangePasswordPayload {
+    current_password: string;
+    password: string;
+    password_confirmation: string;
+}
+
+export interface UpdateProfilePayload {
+    name: string;
+    email: string;
+}
+
+export interface VerifyEmailChangePayload {
+    hash: string;
+    expires?: number;
+    signature?: string;
 }
 
 export interface CreateCompanyPayload {

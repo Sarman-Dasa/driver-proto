@@ -26,6 +26,8 @@ class VerifyEmailRequest extends FormRequest
         return [
             'id' => ['required', 'integer'],
             'hash' => ['required', 'string'],
+            'expires' => ['nullable', 'integer'],
+            'signature' => ['nullable', 'string'],
         ];
     }
 }

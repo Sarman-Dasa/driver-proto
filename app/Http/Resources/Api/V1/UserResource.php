@@ -24,6 +24,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'pending_email' => $this->pending_email,
             'email_verified_at' => $this->email_verified_at?->toISOString(),
             'is_email_verified' => $this->hasVerifiedEmail(),
             'companies' => CompanyResource::collection($this->whenLoaded('companies')),

@@ -202,18 +202,23 @@ Standard Error Response:
 }
 ```
 
-### Endpoints (Phase 0)
+### Endpoints (Phase 0 & 1A)
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/v1/auth/register` | Register user and provision initial workspace |
-| `POST` | `/api/v1/auth/login` | Authenticate user & issue Sanctum token |
-| `POST` | `/api/v1/auth/logout` | Revoke active access token |
+| `POST` | `/api/v1/auth/register` | Register user and provision initial workspace (rate-limited) |
+| `POST` | `/api/v1/auth/login` | Authenticate user & issue Sanctum token (rate-limited) |
+| `POST` | `/api/v1/auth/logout` | Revoke active access token & invalidate session |
 | `GET` | `/api/v1/auth/me` | Retrieve authenticated user profile & companies |
-| `POST` | `/api/v1/auth/forgot-password` | Request password reset notification |
-| `POST` | `/api/v1/auth/reset-password` | Set new password with reset token |
-| `POST` | `/api/v1/auth/verify-email` | Verify user email address |
-| `POST` | `/api/v1/auth/email/resend` | Resend verification email notification |
+| `POST` | `/api/v1/auth/change-password` | Change user password & revoke other active tokens |
+| `POST` | `/api/v1/auth/forgot-password` | Request password reset notification (enumeration-protected, rate-limited) |
+| `POST` | `/api/v1/auth/reset-password` | Set new password with reset token & invalidate all sessions (rate-limited) |
+| `POST` | `/api/v1/auth/verify-email` | Verify user email address with signature & expiry checks |
+| `POST` | `/api/v1/auth/email/resend` | Resend verification email notification (rate-limited) |
+| `GET` | `/api/v1/profile` | Retrieve user profile |
+| `PUT` | `/api/v1/profile` | Update profile with secure email change flow |
+| `POST` | `/api/v1/profile/verify-email-change` | Verify and activate pending email change |
+| `DELETE` | `/api/v1/profile/pending-email` | Cancel pending email change request |
 | `GET` | `/api/v1/companies` | List all companies the user belongs to |
 | `POST` | `/api/v1/companies` | Create a new company workspace |
 | `POST` | `/api/v1/companies/switch` | Switch active company context |
