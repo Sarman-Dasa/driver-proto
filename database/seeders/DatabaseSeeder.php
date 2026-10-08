@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\CompanyStatus;
+use App\Enums\SubscriptionStatus;
 use App\Models\Company;
+use App\Models\Plan;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -68,6 +70,9 @@ class DatabaseSeeder extends Seeder
         // Seed roles and permissions catalog
         $this->call(RoleAndPermissionSeeder::class);
 
+        // Seed plans and features catalog
+        $this->call(PlanAndFeatureSeeder::class);
+
         /** @var Role|null $ownerRole */
         $ownerRole = Role::query()->where('slug', Role::OWNER)->first();
 
@@ -82,6 +87,35 @@ class DatabaseSeeder extends Seeder
             $user->companies()->attach($secondaryCompany->id, ['role_id' => $ownerRole?->id]);
         } else {
             $user->companies()->updateExistingPivot($secondaryCompany->id, ['role_id' => $ownerRole?->id]);
+        }
+
+        /** @var Plan|null $freePlan */
+        $freePlan = Plan::query()->where('slug', Plan::FREE)->first();
+        /** @var Plan|null $proPlan */
+        $proPlan = Plan::query()->where('slug', Plan::PRO)->first();
+
+        // Primary company on Free plan
+        if ($freePlan !== null && $company->subscriptions()->count() === 0) {
+            $company->subscriptions()->create([
+                'plan_id' => $freePlan->id,
+                'status' => SubscriptionStatus::Active,
+                'starts_at' => now(),
+                'current_period_start' => now(),
+                'current_period_end' => now()->addMonth(),
+                'cancel_at_period_end' => false,
+            ]);
+        }
+
+        // Secondary company on Pro plan for multi-workspace plan testing
+        if ($proPlan !== null && $secondaryCompany->subscriptions()->count() === 0) {
+            $secondaryCompany->subscriptions()->create([
+                'plan_id' => $proPlan->id,
+                'status' => SubscriptionStatus::Active,
+                'starts_at' => now(),
+                'current_period_start' => now(),
+                'current_period_end' => now()->addMonth(),
+                'cancel_at_period_end' => false,
+            ]);
         }
     }
 }

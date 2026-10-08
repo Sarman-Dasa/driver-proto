@@ -161,3 +161,69 @@ export interface CompanyMember {
     role: Role | null;
     joined_at?: string | null;
 }
+
+export interface PlanFeatureConfig {
+    id: number;
+    key: string;
+    name: string;
+    description: string | null;
+    type: 'boolean' | 'limit';
+    limit_period: 'none' | 'total' | 'monthly';
+    is_enabled: boolean;
+    limit_value: number | null;
+    is_unlimited: boolean;
+}
+
+export interface Plan {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    price_monthly: number;
+    price_yearly: number;
+    formatted_price_monthly: string;
+    formatted_price_yearly: string;
+    currency: string;
+    is_default: boolean;
+    is_active: boolean;
+    sort_order: number;
+    features?: PlanFeatureConfig[];
+}
+
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'cancelled' | 'expired';
+
+export interface Subscription {
+    id: number;
+    plan_id: number;
+    status: SubscriptionStatus;
+    status_label: string;
+    is_active: boolean;
+    starts_at: string | null;
+    ends_at: string | null;
+    trial_ends_at: string | null;
+    current_period_start: string | null;
+    current_period_end: string | null;
+    cancel_at_period_end: boolean;
+    plan?: Plan;
+}
+
+export interface CompanyFeatureStatus {
+    key: string;
+    name: string;
+    description?: string | null;
+    type: 'boolean' | 'limit';
+    limit_period: 'none' | 'total' | 'monthly';
+    enabled: boolean;
+    limit: number | null;
+    is_unlimited: boolean;
+    current_usage?: number;
+    remaining?: number | null;
+    has_reached_limit?: boolean;
+}
+
+export interface CompanyPlanResponse {
+    subscription: Subscription | null;
+    plan: Plan | null;
+    features: Record<string, CompanyFeatureStatus>;
+}
+

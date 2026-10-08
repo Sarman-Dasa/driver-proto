@@ -49,6 +49,14 @@
                 ></v-list-item>
 
                 <v-list-item
+                    prepend-icon="mdi-credit-card-outline"
+                    title="Plans & Pricing"
+                    value="pricing"
+                    :to="{ name: 'pricing' }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-account-cog-outline"
                     title="Profile Settings"
                     value="profile"
@@ -144,6 +152,18 @@
                 </v-card>
             </v-menu>
 
+            <!-- Current Workspace Plan Badge -->
+            <v-chip
+                v-if="subscriptionStore.currentPlan"
+                size="small"
+                :color="subscriptionStore.currentPlan.slug === 'pro' ? 'primary' : (subscriptionStore.currentPlan.slug === 'business' ? 'purple' : 'default')"
+                variant="flat"
+                class="ml-2 font-weight-bold"
+                :to="{ name: 'pricing' }"
+            >
+                {{ subscriptionStore.currentPlan.name }}
+            </v-chip>
+
             <v-spacer></v-spacer>
 
             <!-- Notification area placeholder -->
@@ -206,11 +226,13 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCompanyStore } from '@/stores/company';
+import { useSubscriptionStore } from '@/stores/subscription';
 
 const drawer = ref(true);
 const router = useRouter();
 const authStore = useAuthStore();
 const companyStore = useCompanyStore();
+const subscriptionStore = useSubscriptionStore();
 
 const handleSwitchCompany = async (companyId: number) => {
     try {

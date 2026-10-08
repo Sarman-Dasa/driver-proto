@@ -7,7 +7,10 @@ use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Company\CompanyAuthorizationController;
 use App\Http\Controllers\Api\V1\Company\CompanyController;
+use App\Http\Controllers\Api\V1\Company\CompanyFeatureController;
+use App\Http\Controllers\Api\V1\Company\CompanyPlanController;
 use App\Http\Controllers\Api\V1\Member\CompanyMemberController;
+use App\Http\Controllers\Api\V1\Plan\PlanController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Role\RoleController;
 use Illuminate\Support\Facades\Route;
@@ -82,6 +85,17 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{company}/members/{member}/role', [CompanyMemberController::class, 'assignRole'])
                 ->middleware('company.access')
                 ->name('api.v1.companies.members.role');
+
+            // Phase 4: Plan and Feature Access
+            Route::get('{company}/plan', [CompanyPlanController::class, 'show'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.plan');
+            Route::get('{company}/features', [CompanyFeatureController::class, 'index'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.features');
         });
     });
+
+    // Phase 4: Public / Authenticated Plan Catalog
+    Route::get('plans', [PlanController::class, 'index'])->name('api.v1.plans.index');
 });

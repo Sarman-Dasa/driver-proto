@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\CompanyStatus;
+use App\Services\FeatureAccessService;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'name',
@@ -121,5 +123,47 @@ class Company extends Model
         $userModel = $user instanceof User ? $user : User::find($user);
 
         return $userModel?->hasPermissionInCompany($this, $permission) ?? false;
+    }
+
+    /**
+     * Subscriptions for this company.
+     *
+     * @return HasMany<Subscription, $this>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Get the current active subscription for this company.
+     */
+    public function currentSubscription(): ?Subscription
+    {
+        return $this->subscriptions()->latest('id')->first();
+    }
+
+    /**
+     * Get the current plan for this company.
+     */
+    public function currentPlan(): ?Plan
+    {
+        return $this->currentSubscription()?->plan;
+    }
+
+    /**
+     * Determine if this company can use a given feature.
+     */
+    public function canUseFeature(string $featureKey): bool
+    {
+        return app(FeatureAccessService::class)->canUseFeature($this, $featureKey);
+    }
+
+    /**
+     * Get the configured limit for a given feature.
+     */
+    public function getFeatureLimit(string $featureKey): ?int
+    {
+        return app(FeatureAccessService::class)->getFeatureLimit($this, $featureKey);
     }
 }

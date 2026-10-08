@@ -2,10 +2,12 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import apiClient from '@/services/api';
 import { usePermissionsStore } from '@/stores/permissions';
+import { useSubscriptionStore } from '@/stores/subscription';
 import type { Company, CreateCompanyPayload, UpdateCompanyPayload, CompanyMember, Role, ApiResponse } from '@/types';
 
 export const useCompanyStore = defineStore('company', () => {
     const permissionsStore = usePermissionsStore();
+    const subscriptionStore = useSubscriptionStore();
     const companies = ref<Company[]>([]);
     const currentCompany = ref<Company | null>(null);
     const loading = ref(false);
@@ -15,9 +17,11 @@ export const useCompanyStore = defineStore('company', () => {
         if (company && company.is_active) {
             localStorage.setItem('billflow_current_company_id', String(company.id));
             permissionsStore.fetchAuthorization(company.id);
+            subscriptionStore.fetchPlan(company.id);
         } else {
             localStorage.removeItem('billflow_current_company_id');
             permissionsStore.clear();
+            subscriptionStore.clear();
         }
     };
 

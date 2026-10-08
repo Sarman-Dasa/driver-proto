@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Actions\Company;
 
 use App\Enums\CompanyStatus;
+use App\Enums\SubscriptionStatus;
 use App\Models\Company;
+use App\Models\Plan;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\CompanyContext;
@@ -58,6 +60,21 @@ class CreateCompanyAction
             $ownerRole = Role::query()->where('slug', Role::OWNER)->first();
 
             $user->companies()->attach($company->id, ['role_id' => $ownerRole?->id]);
+
+            /** @var Plan|null $defaultPlan */
+            $defaultPlan = Plan::query()->where('is_default', true)->first()
+                ?? Plan::query()->where('slug', Plan::FREE)->first();
+
+            if ($defaultPlan !== null) {
+                $company->subscriptions()->create([
+                    'plan_id' => $defaultPlan->id,
+                    'status' => SubscriptionStatus::Active,
+                    'starts_at' => now(),
+                    'current_period_start' => now(),
+                    'current_period_end' => now()->addMonth(),
+                    'cancel_at_period_end' => false,
+                ]);
+            }
 
             $this->companyContext->setCompany($company);
 

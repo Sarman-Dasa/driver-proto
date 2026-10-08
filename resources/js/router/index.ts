@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, layout: 'app' },
     },
     {
+        path: '/pricing',
+        name: 'pricing',
+        component: () => import('@/pages/billing/PricingView.vue'),
+        meta: { layout: 'app' },
+    },
+    {
         path: '/dashboard',
         name: 'dashboard',
         component: () => import('@/pages/dashboard/DashboardView.vue'),
