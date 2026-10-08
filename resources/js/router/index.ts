@@ -80,6 +80,18 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
     },
     {
+        path: '/customers',
+        name: 'customers',
+        component: () => import('@/pages/customers/CustomersView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
+        path: '/customers/:customer',
+        name: 'customers.detail',
+        component: () => import('@/pages/customers/CustomerDetailView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
         path: '/:pathMatch(.*)*',
         redirect: '/dashboard',
     },

@@ -136,6 +136,16 @@ class Company extends Model
     }
 
     /**
+     * Customers belonging to this company.
+     *
+     * @return HasMany<Customer, $this>
+     */
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    /**
      * Get the current active subscription for this company.
      */
     public function currentSubscription(): ?Subscription

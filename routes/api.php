@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Company\CompanyAuthorizationController;
 use App\Http\Controllers\Api\V1\Company\CompanyController;
 use App\Http\Controllers\Api\V1\Company\CompanyFeatureController;
 use App\Http\Controllers\Api\V1\Company\CompanyPlanController;
+use App\Http\Controllers\Api\V1\Customer\CustomerController;
 use App\Http\Controllers\Api\V1\Member\CompanyMemberController;
 use App\Http\Controllers\Api\V1\Plan\PlanController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
@@ -93,6 +94,26 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{company}/features', [CompanyFeatureController::class, 'index'])
                 ->middleware('company.access')
                 ->name('api.v1.companies.features');
+
+            // Phase 5: Customers
+            Route::get('{company}/customers', [CustomerController::class, 'index'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.customers.index');
+            Route::post('{company}/customers', [CustomerController::class, 'store'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.customers.store');
+            Route::get('{company}/customers/{customer}', [CustomerController::class, 'show'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.customers.show');
+            Route::put('{company}/customers/{customer}', [CustomerController::class, 'update'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.customers.update');
+            Route::post('{company}/customers/{customer}/archive', [CustomerController::class, 'archive'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.customers.archive');
+            Route::post('{company}/customers/{customer}/restore', [CustomerController::class, 'restore'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.customers.restore');
         });
     });
 

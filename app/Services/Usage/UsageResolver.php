@@ -21,6 +21,7 @@ class UsageResolver
     {
         $this->providers = $providers ?? [
             new TeamMembersUsageProvider,
+            new CustomersUsageProvider,
         ];
     }
 

@@ -227,3 +227,82 @@ export interface CompanyPlanResponse {
     features: Record<string, CompanyFeatureStatus>;
 }
 
+export type CustomerStatusType = 'active' | 'archived';
+
+export interface Customer {
+    id: number;
+    company_id: number;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    company_name: string | null;
+    tax_number: string | null;
+    billing_address: string | null;
+    billing_city: string | null;
+    billing_state: string | null;
+    billing_postal_code: string | null;
+    billing_country: string | null;
+    shipping_same_as_billing: boolean;
+    shipping_address: string | null;
+    shipping_city: string | null;
+    shipping_state: string | null;
+    shipping_postal_code: string | null;
+    shipping_country: string | null;
+    notes: string | null;
+    status: CustomerStatusType;
+    status_label?: string;
+    is_archived: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at?: string | null;
+}
+
+export interface CreateCustomerPayload {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    company_name?: string | null;
+    tax_number?: string | null;
+    billing_address?: string | null;
+    billing_city?: string | null;
+    billing_state?: string | null;
+    billing_postal_code?: string | null;
+    billing_country?: string | null;
+    shipping_same_as_billing?: boolean;
+    shipping_address?: string | null;
+    shipping_city?: string | null;
+    shipping_state?: string | null;
+    shipping_postal_code?: string | null;
+    shipping_country?: string | null;
+    notes?: string | null;
+}
+
+export interface UpdateCustomerPayload {
+    name?: string;
+    email?: string | null;
+    phone?: string | null;
+    company_name?: string | null;
+    tax_number?: string | null;
+    billing_address?: string | null;
+    billing_city?: string | null;
+    billing_state?: string | null;
+    billing_postal_code?: string | null;
+    billing_country?: string | null;
+    shipping_same_as_billing?: boolean;
+    shipping_address?: string | null;
+    shipping_city?: string | null;
+    shipping_state?: string | null;
+    shipping_postal_code?: string | null;
+    shipping_country?: string | null;
+    notes?: string | null;
+}
+
+export interface CustomerFilterParams {
+    status?: 'active' | 'archived' | 'all';
+    search?: string;
+    sort?: string;
+    page?: number;
+    per_page?: number;
+}
+
+

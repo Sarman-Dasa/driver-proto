@@ -23,6 +23,15 @@
                 ></v-list-item>
 
                 <v-list-item
+                    v-if="companyStore.currentCompany"
+                    prepend-icon="mdi-account-group-outline"
+                    title="Customers"
+                    value="customers"
+                    :to="{ name: 'customers' }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-domain"
                     title="Workspaces"
                     value="companies"
