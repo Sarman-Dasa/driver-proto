@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Company\CompanyPlanController;
 use App\Http\Controllers\Api\V1\Customer\CustomerController;
 use App\Http\Controllers\Api\V1\Member\CompanyMemberController;
 use App\Http\Controllers\Api\V1\Plan\PlanController;
+use App\Http\Controllers\Api\V1\Product\ProductController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Role\RoleController;
 use Illuminate\Support\Facades\Route;
@@ -114,6 +115,29 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{company}/customers/{customer}/restore', [CustomerController::class, 'restore'])
                 ->middleware('company.access')
                 ->name('api.v1.companies.customers.restore');
+
+            // Phase 6: Products & Services
+            Route::get('{company}/products', [ProductController::class, 'index'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.products.index');
+            Route::post('{company}/products', [ProductController::class, 'store'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.products.store');
+            Route::get('{company}/products/{product}', [ProductController::class, 'show'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.products.show');
+            Route::put('{company}/products/{product}', [ProductController::class, 'update'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.products.update');
+            Route::patch('{company}/products/{product}/status', [ProductController::class, 'updateStatus'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.products.status');
+            Route::delete('{company}/products/{product}', [ProductController::class, 'destroy'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.products.destroy');
+            Route::post('{company}/products/{product}/restore', [ProductController::class, 'restore'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.products.restore');
         });
     });
 

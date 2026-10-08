@@ -305,4 +305,63 @@ export interface CustomerFilterParams {
     per_page?: number;
 }
 
+export type ProductType = 'product' | 'service';
+export type ProductStatus = 'active' | 'inactive';
+
+export interface Product {
+    id: number;
+    company_id: number;
+    type: ProductType;
+    type_label?: string;
+    name: string;
+    description: string | null;
+    sku: string | null;
+    price: number;
+    price_decimal?: number;
+    formatted_price?: string;
+    currency: string;
+    tax_rate: number;
+    unit: string | null;
+    status: ProductStatus;
+    status_label?: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at?: string | null;
+}
+
+export interface CreateProductPayload {
+    type: ProductType;
+    name: string;
+    description?: string | null;
+    sku?: string | null;
+    price: number;
+    currency?: string;
+    tax_rate?: number;
+    unit?: string | null;
+    status?: ProductStatus;
+}
+
+export interface UpdateProductPayload {
+    type?: ProductType;
+    name?: string;
+    description?: string | null;
+    sku?: string | null;
+    price?: number;
+    currency?: string;
+    tax_rate?: number;
+    unit?: string | null;
+    status?: ProductStatus;
+}
+
+export interface ProductFilterParams {
+    type?: ProductType | 'all';
+    status?: ProductStatus | 'all' | 'archived';
+    search?: string;
+    sort?: string;
+    page?: number;
+    per_page?: number;
+}
+
+
 

@@ -26,6 +26,8 @@ class Feature extends Model
     // Feature key constants
     public const CUSTOMERS = 'customers';
 
+    public const PRODUCTS = 'products';
+
     public const INVOICES = 'invoices';
 
     public const EXPENSES = 'expenses';

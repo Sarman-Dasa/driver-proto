@@ -4,12 +4,14 @@ import apiClient from '@/services/api';
 import { usePermissionsStore } from '@/stores/permissions';
 import { useSubscriptionStore } from '@/stores/subscription';
 import { useCustomerStore } from '@/stores/customers';
+import { useProductStore } from '@/stores/products';
 import type { Company, CreateCompanyPayload, UpdateCompanyPayload, CompanyMember, Role, ApiResponse } from '@/types';
 
 export const useCompanyStore = defineStore('company', () => {
     const permissionsStore = usePermissionsStore();
     const subscriptionStore = useSubscriptionStore();
     const customerStore = useCustomerStore();
+    const productStore = useProductStore();
     const companies = ref<Company[]>([]);
     const currentCompany = ref<Company | null>(null);
     const loading = ref(false);
@@ -33,6 +35,9 @@ export const useCompanyStore = defineStore('company', () => {
      * Clear any stale company-scoped state upon workspace switch.
      */
     const clearCompanyScopedData = () => {
+        customerStore.clear();
+        productStore.clear();
+
         // Dispatches workspace change event for future company-scoped modules
         window.dispatchEvent(new CustomEvent('billflow:workspace-changed', {
             detail: { companyId: currentCompany.value?.id },

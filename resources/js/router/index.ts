@@ -92,6 +92,18 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
     },
     {
+        path: '/products',
+        name: 'products',
+        component: () => import('@/pages/products/ProductsView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
+        path: '/products/:product',
+        name: 'products.detail',
+        component: () => import('@/pages/products/ProductDetailView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
         path: '/:pathMatch(.*)*',
         redirect: '/dashboard',
     },

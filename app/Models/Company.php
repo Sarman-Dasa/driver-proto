@@ -146,6 +146,16 @@ class Company extends Model
     }
 
     /**
+     * Products and services belonging to this company.
+     *
+     * @return HasMany<Product, $this>
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    /**
      * Get the current active subscription for this company.
      */
     public function currentSubscription(): ?Subscription

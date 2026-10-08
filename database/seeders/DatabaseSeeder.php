@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\CompanyStatus;
+use App\Enums\ProductStatus;
+use App\Enums\ProductType;
 use App\Enums\SubscriptionStatus;
 use App\Models\Company;
 use App\Models\Plan;
+use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -117,5 +120,75 @@ class DatabaseSeeder extends Seeder
                 'cancel_at_period_end' => false,
             ]);
         }
+        // Seed sample products and services
+        Product::query()->firstOrCreate(
+            ['company_id' => $company->id, 'sku' => 'WEB-DEV-001'],
+            [
+                'name' => 'Website Development',
+                'type' => ProductType::Service,
+                'description' => 'Professional full-stack website development and design.',
+                'price' => 200000,
+                'currency' => 'USD',
+                'tax_rate' => 18.00,
+                'unit' => 'project',
+                'status' => ProductStatus::Active,
+            ]
+        );
+
+        Product::query()->firstOrCreate(
+            ['company_id' => $company->id, 'sku' => 'HOST-001'],
+            [
+                'name' => 'Cloud Hosting & Maintenance',
+                'type' => ProductType::Service,
+                'description' => 'Managed cloud infrastructure, backup and server maintenance.',
+                'price' => 20000,
+                'currency' => 'USD',
+                'tax_rate' => 10.00,
+                'unit' => 'month',
+                'status' => ProductStatus::Active,
+            ]
+        );
+
+        Product::query()->firstOrCreate(
+            ['company_id' => $company->id, 'sku' => 'LAP-001'],
+            [
+                'name' => 'Developer Workstation Laptop',
+                'type' => ProductType::Product,
+                'description' => 'High-performance laptop for software engineering.',
+                'price' => 150000,
+                'currency' => 'USD',
+                'tax_rate' => 5.00,
+                'unit' => 'piece',
+                'status' => ProductStatus::Active,
+            ]
+        );
+
+        Product::query()->firstOrCreate(
+            ['company_id' => $secondaryCompany->id, 'sku' => 'ARC-MNT-001'],
+            [
+                'name' => 'Arc Reactor Maintenance',
+                'type' => ProductType::Service,
+                'description' => 'Clean energy generator calibration and plasma containment inspection.',
+                'price' => 5000000,
+                'currency' => 'USD',
+                'tax_rate' => 18.00,
+                'unit' => 'service',
+                'status' => ProductStatus::Active,
+            ]
+        );
+
+        Product::query()->firstOrCreate(
+            ['company_id' => $secondaryCompany->id, 'sku' => 'REP-001'],
+            [
+                'name' => 'Mark VII Repulsor Stabilizer',
+                'type' => ProductType::Product,
+                'description' => 'Flight stabilization and energy dampening unit.',
+                'price' => 1250000,
+                'currency' => 'USD',
+                'tax_rate' => 12.00,
+                'unit' => 'piece',
+                'status' => ProductStatus::Active,
+            ]
+        );
     }
 }

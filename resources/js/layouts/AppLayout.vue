@@ -32,6 +32,15 @@
                 ></v-list-item>
 
                 <v-list-item
+                    v-if="companyStore.currentCompany && permissionsStore.can('products.view')"
+                    prepend-icon="mdi-package-variant-closed"
+                    title="Products & Services"
+                    value="products"
+                    :to="{ name: 'products' }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-domain"
                     title="Workspaces"
                     value="companies"
@@ -236,12 +245,14 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useCompanyStore } from '@/stores/company';
 import { useSubscriptionStore } from '@/stores/subscription';
+import { usePermissionsStore } from '@/stores/permissions';
 
 const drawer = ref(true);
 const router = useRouter();
 const authStore = useAuthStore();
 const companyStore = useCompanyStore();
 const subscriptionStore = useSubscriptionStore();
+const permissionsStore = usePermissionsStore();
 
 const handleSwitchCompany = async (companyId: number) => {
     try {

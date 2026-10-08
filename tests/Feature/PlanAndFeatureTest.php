@@ -44,8 +44,9 @@ class PlanAndFeatureTest extends TestCase
         $this->assertDatabaseHas('plans', ['slug' => 'pro', 'is_default' => false, 'price_monthly' => 1900]);
         $this->assertDatabaseHas('plans', ['slug' => 'business', 'is_default' => false, 'price_monthly' => 4900]);
 
-        $this->assertDatabaseCount('features', 11);
+        $this->assertDatabaseCount('features', 12);
         $this->assertDatabaseHas('features', ['key' => Feature::CUSTOMERS]);
+        $this->assertDatabaseHas('features', ['key' => Feature::PRODUCTS]);
         $this->assertDatabaseHas('features', ['key' => Feature::INVOICES]);
         $this->assertDatabaseHas('features', ['key' => Feature::EXPENSES]);
         $this->assertDatabaseHas('features', ['key' => Feature::ONLINE_PAYMENTS]);

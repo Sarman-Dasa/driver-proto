@@ -28,6 +28,13 @@ class PlanAndFeatureSeeder extends Seeder
                 'limit_period' => LimitPeriod::Total,
             ],
             [
+                'key' => Feature::PRODUCTS,
+                'name' => 'Products & Services',
+                'description' => 'Maximum number of items in the products and services catalog.',
+                'type' => FeatureType::Limit,
+                'limit_period' => LimitPeriod::Total,
+            ],
+            [
                 'key' => Feature::INVOICES,
                 'name' => 'Invoices',
                 'description' => 'Number of invoices created per month.',
@@ -158,6 +165,7 @@ class PlanAndFeatureSeeder extends Seeder
         // 3. Map Plan Features
         $freeFeatures = [
             Feature::CUSTOMERS => ['enabled' => true, 'limit' => 5],
+            Feature::PRODUCTS => ['enabled' => true, 'limit' => 10],
             Feature::INVOICES => ['enabled' => true, 'limit' => 10],
             Feature::EXPENSES => ['enabled' => false, 'limit' => null],
             Feature::ONLINE_PAYMENTS => ['enabled' => false, 'limit' => null],
@@ -172,6 +180,7 @@ class PlanAndFeatureSeeder extends Seeder
 
         $proFeatures = [
             Feature::CUSTOMERS => ['enabled' => true, 'limit' => null],
+            Feature::PRODUCTS => ['enabled' => true, 'limit' => null],
             Feature::INVOICES => ['enabled' => true, 'limit' => null],
             Feature::EXPENSES => ['enabled' => true, 'limit' => null],
             Feature::ONLINE_PAYMENTS => ['enabled' => true, 'limit' => null],
@@ -186,6 +195,7 @@ class PlanAndFeatureSeeder extends Seeder
 
         $businessFeatures = [
             Feature::CUSTOMERS => ['enabled' => true, 'limit' => null],
+            Feature::PRODUCTS => ['enabled' => true, 'limit' => null],
             Feature::INVOICES => ['enabled' => true, 'limit' => null],
             Feature::EXPENSES => ['enabled' => true, 'limit' => null],
             Feature::ONLINE_PAYMENTS => ['enabled' => true, 'limit' => null],
