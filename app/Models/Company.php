@@ -102,4 +102,24 @@ class Company extends Model
     {
         return $query->where('status', CompanyStatus::Active->value);
     }
+
+    /**
+     * Get the role of a given user within this company.
+     */
+    public function roleOf(User|int|string $user): ?Role
+    {
+        $userModel = $user instanceof User ? $user : User::find($user);
+
+        return $userModel?->roleInCompany($this);
+    }
+
+    /**
+     * Determine if a company member has a given permission.
+     */
+    public function memberHasPermission(User|int|string $user, string $permission): bool
+    {
+        $userModel = $user instanceof User ? $user : User::find($user);
+
+        return $userModel?->hasPermissionInCompany($this, $permission) ?? false;
+    }
 }

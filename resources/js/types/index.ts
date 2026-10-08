@@ -137,3 +137,27 @@ export interface UpdateCompanyPayload {
     currency?: string | null;
     timezone?: string | null;
 }
+
+export interface Role {
+    id: number;
+    name: string;
+    slug: string;
+    description?: string | null;
+    is_system?: boolean;
+    permissions?: string[];
+}
+
+export interface CompanyAuthorization {
+    role: Role | null;
+    permissions: string[];
+    is_owner: boolean;
+}
+
+export interface CompanyMember {
+    id: number;
+    name: string;
+    email: string;
+    is_owner: boolean;
+    role: Role | null;
+    joined_at?: string | null;
+}

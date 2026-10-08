@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import apiClient from '@/services/api';
-import type { Company, CreateCompanyPayload, UpdateCompanyPayload, ApiResponse } from '@/types';
+import { usePermissionsStore } from '@/stores/permissions';
+import type { Company, CreateCompanyPayload, UpdateCompanyPayload, CompanyMember, Role, ApiResponse } from '@/types';
 
 export const useCompanyStore = defineStore('company', () => {
+    const permissionsStore = usePermissionsStore();
     const companies = ref<Company[]>([]);
     const currentCompany = ref<Company | null>(null);
     const loading = ref(false);
@@ -12,8 +14,10 @@ export const useCompanyStore = defineStore('company', () => {
         currentCompany.value = company;
         if (company && company.is_active) {
             localStorage.setItem('billflow_current_company_id', String(company.id));
+            permissionsStore.fetchAuthorization(company.id);
         } else {
             localStorage.removeItem('billflow_current_company_id');
+            permissionsStore.clear();
         }
     };
 
@@ -171,6 +175,24 @@ export const useCompanyStore = defineStore('company', () => {
         }
     };
 
+    const fetchMembers = async (companyId: number): Promise<CompanyMember[]> => {
+        const response = await apiClient.get<ApiResponse<CompanyMember[]>>(`/companies/${companyId}/members`);
+        return response.data.data;
+    };
+
+    const fetchRoles = async (companyId: number): Promise<Role[]> => {
+        const response = await apiClient.get<ApiResponse<Role[]>>(`/companies/${companyId}/roles`);
+        return response.data.data;
+    };
+
+    const assignMemberRole = async (companyId: number, memberId: number, roleId: number): Promise<CompanyMember> => {
+        const response = await apiClient.post<ApiResponse<CompanyMember>>(
+            `/companies/${companyId}/members/${memberId}/role`,
+            { role_id: roleId }
+        );
+        return response.data.data;
+    };
+
     const clearCurrentCompany = () => {
         setCurrentCompany(null);
         clearCompanyScopedData();
@@ -189,5 +211,8 @@ export const useCompanyStore = defineStore('company', () => {
         updateCompany,
         deactivateCompany,
         reactivateCompany,
+        fetchMembers,
+        fetchRoles,
+        assignMemberRole,
     };
 });

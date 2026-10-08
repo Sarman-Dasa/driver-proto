@@ -6,6 +6,7 @@ namespace App\Actions\Company;
 
 use App\Enums\CompanyStatus;
 use App\Models\Company;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\CompanyContext;
 use Illuminate\Support\Facades\DB;
@@ -53,7 +54,10 @@ class CreateCompanyAction
                 'owner_id' => $user->id,
             ]);
 
-            $user->companies()->attach($company->id, ['role_id' => null]);
+            /** @var Role|null $ownerRole */
+            $ownerRole = Role::query()->where('slug', Role::OWNER)->first();
+
+            $user->companies()->attach($company->id, ['role_id' => $ownerRole?->id]);
 
             $this->companyContext->setCompany($company);
 

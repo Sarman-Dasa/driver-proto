@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Enums\CompanyStatus;
 use App\Models\Company;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -64,13 +65,23 @@ class DatabaseSeeder extends Seeder
             $secondaryCompany->update(['owner_id' => $user->id]);
         }
 
-        // Attach company memberships if not attached
+        // Seed roles and permissions catalog
+        $this->call(RoleAndPermissionSeeder::class);
+
+        /** @var Role|null $ownerRole */
+        $ownerRole = Role::query()->where('slug', Role::OWNER)->first();
+
+        // Attach company memberships with owner role
         if (! $user->belongsToCompany($company)) {
-            $user->companies()->attach($company->id, ['role_id' => null]);
+            $user->companies()->attach($company->id, ['role_id' => $ownerRole?->id]);
+        } else {
+            $user->companies()->updateExistingPivot($company->id, ['role_id' => $ownerRole?->id]);
         }
 
         if (! $user->belongsToCompany($secondaryCompany)) {
-            $user->companies()->attach($secondaryCompany->id, ['role_id' => null]);
+            $user->companies()->attach($secondaryCompany->id, ['role_id' => $ownerRole?->id]);
+        } else {
+            $user->companies()->updateExistingPivot($secondaryCompany->id, ['role_id' => $ownerRole?->id]);
         }
     }
 }

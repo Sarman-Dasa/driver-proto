@@ -5,8 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
+use App\Http\Controllers\Api\V1\Company\CompanyAuthorizationController;
 use App\Http\Controllers\Api\V1\Company\CompanyController;
+use App\Http\Controllers\Api\V1\Member\CompanyMemberController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
+use App\Http\Controllers\Api\V1\Role\RoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -65,6 +68,20 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{company}/switch', [CompanyController::class, 'switch'])->name('api.v1.companies.switch-by-id');
             Route::post('{company}/deactivate', [CompanyController::class, 'deactivate'])->middleware('company.access')->name('api.v1.companies.deactivate');
             Route::post('{company}/reactivate', [CompanyController::class, 'reactivate'])->middleware('company.access:allow_inactive')->name('api.v1.companies.reactivate');
+
+            // Phase 3: Authorization, Roles, and Members
+            Route::get('{company}/authorization', CompanyAuthorizationController::class)
+                ->middleware('company.access')
+                ->name('api.v1.companies.authorization');
+            Route::get('{company}/roles', [RoleController::class, 'index'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.roles');
+            Route::get('{company}/members', [CompanyMemberController::class, 'index'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.members.index');
+            Route::post('{company}/members/{member}/role', [CompanyMemberController::class, 'assignRole'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.members.role');
         });
     });
 });

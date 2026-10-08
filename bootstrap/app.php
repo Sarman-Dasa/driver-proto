@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\EnsureCompanyAccess;
+use App\Http\Middleware\EnsureCompanyPermission;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'company.access' => EnsureCompanyAccess::class,
+            'company.permission' => EnsureCompanyPermission::class,
         ]);
 
         $middleware->statefulApi();
