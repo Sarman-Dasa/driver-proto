@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Enums\CompanyStatus;
 use App\Models\Company;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -36,8 +37,28 @@ class CompanyFactory extends Factory
             'email' => fake()->companyEmail(),
             'phone' => fake()->phoneNumber(),
             'logo' => null,
+            'website' => 'https://'.fake()->domainName(),
+            'address' => fake()->streetAddress(),
+            'city' => fake()->city(),
+            'state' => fake()->state(),
+            'postal_code' => fake()->postcode(),
+            'country' => fake()->country(),
+            'tax_number' => 'TAX-'.fake()->numerify('######'),
+            'currency' => 'USD',
+            'timezone' => 'UTC',
             'status' => CompanyStatus::Active,
+            'owner_id' => null,
         ];
+    }
+
+    /**
+     * Set the owner for the company.
+     */
+    public function forOwner(User $user): static
+    {
+        return $this->state(fn () => [
+            'owner_id' => $user->id,
+        ]);
     }
 
     /**

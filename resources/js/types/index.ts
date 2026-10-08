@@ -7,8 +7,19 @@ export interface Company {
     email: string | null;
     phone: string | null;
     logo: string | null;
+    website?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+    tax_number?: string | null;
+    currency?: string | null;
+    timezone?: string | null;
     status: CompanyStatus;
     is_active: boolean;
+    owner_id?: number | null;
+    is_owner?: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -99,6 +110,30 @@ export interface VerifyEmailChangePayload {
 
 export interface CreateCompanyPayload {
     name: string;
-    email?: string;
-    phone?: string;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+    tax_number?: string | null;
+    currency?: string | null;
+    timezone?: string | null;
+}
+
+export interface UpdateCompanyPayload {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+    tax_number?: string | null;
+    currency?: string | null;
+    timezone?: string | null;
 }

@@ -23,10 +23,28 @@
                 ></v-list-item>
 
                 <v-list-item
+                    prepend-icon="mdi-domain"
+                    title="Workspaces"
+                    value="companies"
+                    :to="{ name: 'companies' }"
+                    exact
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
+                    v-if="companyStore.currentCompany"
+                    prepend-icon="mdi-cog-outline"
+                    title="Workspace Settings"
+                    value="workspace-settings"
+                    :to="{ name: 'companies.settings', params: { company: companyStore.currentCompany.id } }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-office-building-plus-outline"
                     title="New Workspace"
-                    value="onboarding"
-                    :to="{ name: 'onboarding' }"
+                    value="companies-create"
+                    :to="{ name: 'companies.create' }"
                     color="primary"
                 ></v-list-item>
 
@@ -45,7 +63,7 @@
             <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
             <!-- Company Context Switcher -->
-            <v-menu v-if="companyStore.companies.length > 0" location="bottom start" :close-on-content-click="false">
+            <v-menu v-if="companyStore.companies.length > 0" location="bottom start" :close-on-content-click="true">
                 <template #activator="{ props }">
                     <v-btn
                         v-bind="props"
@@ -59,9 +77,20 @@
                     </v-btn>
                 </template>
 
-                <v-card min-width="260" class="pa-2 rounded-xl">
-                    <div class="text-caption font-weight-bold px-3 py-2 text-uppercase text-medium-emphasis">
-                        Workspaces
+                <v-card min-width="280" class="pa-2 rounded-xl">
+                    <div class="d-flex align-center justify-space-between px-3 py-2">
+                        <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">
+                            Workspaces
+                        </span>
+                        <v-btn
+                            variant="text"
+                            size="x-small"
+                            color="primary"
+                            :to="{ name: 'companies' }"
+                            class="text-none"
+                        >
+                            View All
+                        </v-btn>
                     </div>
 
                     <v-list density="compact">
@@ -70,20 +99,24 @@
                             :key="company.id"
                             :value="company.id"
                             :active="companyStore.currentCompany?.id === company.id"
+                            :disabled="!company.is_active"
                             color="primary"
                             rounded="lg"
-                            @click="handleSwitchCompany(company.id)"
+                            @click="company.is_active && handleSwitchCompany(company.id)"
                         >
                             <template #prepend>
                                 <v-icon
                                     :icon="companyStore.currentCompany?.id === company.id ? 'mdi-check-circle' : 'mdi-domain'"
-                                    :color="companyStore.currentCompany?.id === company.id ? 'primary' : 'grey'"
+                                    :color="companyStore.currentCompany?.id === company.id ? 'primary' : (company.is_active ? 'grey' : 'error')"
                                 ></v-icon>
                             </template>
                             <v-list-item-title class="font-weight-medium">{{ company.name }}</v-list-item-title>
                             <v-list-item-subtitle class="text-caption">
                                 <span :class="company.is_active ? 'text-success' : 'text-error'">
-                                    {{ company.status }}
+                                    {{ company.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                                <span v-if="company.is_owner" class="ml-1 text-primary font-weight-medium">
+                                    • Owner
                                 </span>
                             </v-list-item-subtitle>
                         </v-list-item>
@@ -91,16 +124,23 @@
 
                     <v-divider class="my-2"></v-divider>
 
-                    <v-btn
-                        block
-                        variant="text"
-                        color="primary"
-                        prepend-icon="mdi-plus"
-                        class="text-none"
-                        :to="{ name: 'onboarding' }"
-                    >
-                        Add Workspace
-                    </v-btn>
+                    <v-list density="compact" nav>
+                        <v-list-item
+                            v-if="companyStore.currentCompany"
+                            prepend-icon="mdi-cog-outline"
+                            title="Workspace Settings"
+                            :to="{ name: 'companies.settings', params: { company: companyStore.currentCompany.id } }"
+                            rounded="lg"
+                        ></v-list-item>
+
+                        <v-list-item
+                            prepend-icon="mdi-plus"
+                            title="Create Workspace"
+                            color="primary"
+                            :to="{ name: 'companies.create' }"
+                            rounded="lg"
+                        ></v-list-item>
+                    </v-list>
                 </v-card>
             </v-menu>
 

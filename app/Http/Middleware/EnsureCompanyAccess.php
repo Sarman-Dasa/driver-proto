@@ -28,6 +28,9 @@ class EnsureCompanyAccess
      */
     public function handle(Request $request, Closure $next, ?string $mode = null): Response
     {
+        // Reset any leftover context to ensure complete request isolation
+        $this->companyContext->clear();
+
         /** @var User|null $user */
         $user = $request->user();
 
@@ -69,8 +72,8 @@ class EnsureCompanyAccess
             return ApiResponse::error('You do not have access to this company.', [], 403);
         }
 
-        // 3. Validate that the company is active
-        if (! $company->isActive()) {
+        // 3. Validate that the company is active unless explicitly allowed
+        if ($mode !== 'allow_inactive' && ! $company->isActive()) {
             return ApiResponse::error('This company is inactive.', [], 403);
         }
 
@@ -79,5 +82,13 @@ class EnsureCompanyAccess
         $request->attributes->set('current_company', $company);
 
         return $next($request);
+    }
+
+    /**
+     * Clean up company context after response has been sent to prevent cross-request leakage.
+     */
+    public function terminate(Request $request, Response $response): void
+    {
+        $this->companyContext->clear();
     }
 }

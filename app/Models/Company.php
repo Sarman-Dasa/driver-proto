@@ -10,9 +10,27 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['name', 'slug', 'email', 'phone', 'logo', 'status'])]
+#[Fillable([
+    'name',
+    'slug',
+    'email',
+    'phone',
+    'logo',
+    'status',
+    'owner_id',
+    'website',
+    'address',
+    'city',
+    'state',
+    'postal_code',
+    'country',
+    'tax_number',
+    'currency',
+    'timezone',
+])]
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -31,6 +49,16 @@ class Company extends Model
     }
 
     /**
+     * The owner of the company.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
      * The users that belong to the company.
      *
      * @return BelongsToMany<User, $this>
@@ -40,6 +68,20 @@ class Company extends Model
         return $this->belongsToMany(User::class, 'company_users')
             ->withPivot(['id', 'role_id'])
             ->withTimestamps();
+    }
+
+    /**
+     * Determine if the given user is the company owner.
+     */
+    public function isOwner(User|int|null $user): bool
+    {
+        if ($user === null || $this->owner_id === null) {
+            return false;
+        }
+
+        $userId = $user instanceof User ? $user->id : (int) $user;
+
+        return (int) $this->owner_id === $userId;
     }
 
     /**

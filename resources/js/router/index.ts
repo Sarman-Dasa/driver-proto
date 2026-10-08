@@ -40,7 +40,25 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/onboarding',
         name: 'onboarding',
-        component: () => import('@/pages/onboarding/OnboardingView.vue'),
+        component: () => import('@/pages/company/CreateCompanyView.vue'),
+        meta: { requiresAuth: true, layout: 'app' },
+    },
+    {
+        path: '/companies',
+        name: 'companies',
+        component: () => import('@/pages/company/CompanyListView.vue'),
+        meta: { requiresAuth: true, layout: 'app' },
+    },
+    {
+        path: '/companies/create',
+        name: 'companies.create',
+        component: () => import('@/pages/company/CreateCompanyView.vue'),
+        meta: { requiresAuth: true, layout: 'app' },
+    },
+    {
+        path: '/companies/:company/settings',
+        name: 'companies.settings',
+        component: () => import('@/pages/company/CompanySettingsView.vue'),
         meta: { requiresAuth: true, layout: 'app' },
     },
     {
@@ -103,8 +121,11 @@ router.beforeEach(async (to, _from, next) => {
                 await companyStore.fetchCompanies();
             }
 
-            if (!companyStore.currentCompany) {
-                return next({ name: 'onboarding' });
+            if (!companyStore.currentCompany || !companyStore.currentCompany.is_active) {
+                if (companyStore.companies.length > 0) {
+                    return next({ name: 'companies' });
+                }
+                return next({ name: 'companies.create' });
             }
         }
     }

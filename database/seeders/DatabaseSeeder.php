@@ -38,8 +38,14 @@ class DatabaseSeeder extends Seeder
                 'email' => 'contact@acmecorp.test',
                 'phone' => '+1 555-0100',
                 'status' => CompanyStatus::Active,
+                'owner_id' => $user->id,
+                'currency' => 'USD',
+                'timezone' => 'UTC',
             ],
         );
+        if ($company->owner_id === null) {
+            $company->update(['owner_id' => $user->id]);
+        }
 
         // Development secondary company to test company switching
         $secondaryCompany = Company::query()->firstOrCreate(
@@ -49,8 +55,14 @@ class DatabaseSeeder extends Seeder
                 'email' => 'info@starkindustries.test',
                 'phone' => '+1 555-0199',
                 'status' => CompanyStatus::Active,
+                'owner_id' => $user->id,
+                'currency' => 'USD',
+                'timezone' => 'UTC',
             ],
         );
+        if ($secondaryCompany->owner_id === null) {
+            $secondaryCompany->update(['owner_id' => $user->id]);
+        }
 
         // Attach company memberships if not attached
         if (! $user->belongsToCompany($company)) {

@@ -20,6 +20,8 @@ class CompanyResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $user = $request->user();
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -27,8 +29,19 @@ class CompanyResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'logo' => $this->logo,
+            'website' => $this->website,
+            'address' => $this->address,
+            'city' => $this->city,
+            'state' => $this->state,
+            'postal_code' => $this->postal_code,
+            'country' => $this->country,
+            'tax_number' => $this->tax_number,
+            'currency' => $this->currency ?? 'USD',
+            'timezone' => $this->timezone ?? 'UTC',
             'status' => $this->status->value,
             'is_active' => $this->isActive(),
+            'owner_id' => $this->owner_id,
+            'is_owner' => $user !== null && $this->isOwner($user),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

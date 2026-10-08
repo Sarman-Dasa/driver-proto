@@ -27,6 +27,15 @@ class CreateCompanyRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
+            'website' => ['nullable', 'string', 'url', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:30'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'tax_number' => ['nullable', 'string', 'max:50'],
+            'currency' => ['nullable', 'string', 'size:3'],
+            'timezone' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

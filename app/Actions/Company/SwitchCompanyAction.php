@@ -20,9 +20,11 @@ class SwitchCompanyAction
      *
      * @throws ValidationException
      */
-    public function execute(User $user, int $companyId): Company
+    public function execute(User $user, Company|int $companyOrId): Company
     {
-        $company = Company::query()->find($companyId);
+        $company = $companyOrId instanceof Company
+            ? $companyOrId
+            : Company::query()->find($companyOrId);
 
         if (! $company) {
             throw ValidationException::withMessages([

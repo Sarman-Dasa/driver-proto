@@ -59,7 +59,12 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/', [CompanyController::class, 'store'])->name('api.v1.companies.store');
             Route::post('switch', [CompanyController::class, 'switch'])->name('api.v1.companies.switch');
             Route::get('current', [CompanyController::class, 'current'])->middleware('company.access')->name('api.v1.companies.current');
+
             Route::get('{company}', [CompanyController::class, 'show'])->middleware('company.access')->name('api.v1.companies.show');
+            Route::put('{company}', [CompanyController::class, 'update'])->middleware('company.access')->name('api.v1.companies.update');
+            Route::post('{company}/switch', [CompanyController::class, 'switch'])->name('api.v1.companies.switch-by-id');
+            Route::post('{company}/deactivate', [CompanyController::class, 'deactivate'])->middleware('company.access')->name('api.v1.companies.deactivate');
+            Route::post('{company}/reactivate', [CompanyController::class, 'reactivate'])->middleware('company.access:allow_inactive')->name('api.v1.companies.reactivate');
         });
     });
 });

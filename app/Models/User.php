@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -58,6 +59,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * The companies owned by the user.
+     *
+     * @return HasMany<Company, $this>
+     */
+    public function ownedCompanies(): HasMany
+    {
+        return $this->hasMany(Company::class, 'owner_id');
+    }
+
+    /**
      * Determine if the user belongs to the given company.
      */
     public function belongsToCompany(Company|int|string $company): bool
@@ -65,5 +76,15 @@ class User extends Authenticatable implements MustVerifyEmail
         $companyId = $company instanceof Company ? $company->id : (int) $company;
 
         return $this->companies()->where('companies.id', $companyId)->exists();
+    }
+
+    /**
+     * Determine if the user owns the given company.
+     */
+    public function isOwnerOf(Company|int|string $company): bool
+    {
+        $companyId = $company instanceof Company ? $company->id : (int) $company;
+
+        return $this->ownedCompanies()->where('id', $companyId)->exists();
     }
 }
