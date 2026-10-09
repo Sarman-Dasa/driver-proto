@@ -76,6 +76,24 @@ const routes: RouteRecordRaw[] = [
         meta: { layout: 'app' },
     },
     {
+        path: '/settings/subscription',
+        name: 'settings.subscription',
+        component: () => import('@/pages/billing/SubscriptionSettingsView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
+        path: '/subscription/success',
+        name: 'subscription.success',
+        component: () => import('@/pages/billing/SubscriptionSuccessView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
+        path: '/subscription/cancel',
+        name: 'subscription.cancel',
+        component: () => import('@/pages/billing/SubscriptionCancelView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
         path: '/dashboard',
         name: 'dashboard',
         component: () => import('@/pages/dashboard/DashboardView.vue'),

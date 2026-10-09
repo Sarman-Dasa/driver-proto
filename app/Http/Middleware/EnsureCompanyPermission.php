@@ -50,7 +50,7 @@ class EnsureCompanyPermission
         }
 
         foreach ($permissions as $permission) {
-            if (! $user->hasPermissionInCompany($company, $permission)) {
+            if (! $company->isOwner($user) && ! $user->hasPermissionInCompany($company, $permission)) {
                 return ApiResponse::error('You do not have permission to perform this action in this workspace.', [], 403);
             }
         }

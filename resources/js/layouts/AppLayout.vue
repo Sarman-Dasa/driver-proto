@@ -76,6 +76,15 @@
                 ></v-list-item>
 
                 <v-list-item
+                    v-if="companyStore.currentCompany && permissionsStore.can('billing.view')"
+                    prepend-icon="mdi-receipt-text-clock-outline"
+                    title="Billing & Subscription"
+                    value="subscription"
+                    :to="{ name: 'settings.subscription' }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-credit-card-outline"
                     title="Plans & Pricing"
                     value="pricing"

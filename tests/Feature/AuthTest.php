@@ -47,6 +47,9 @@ class AuthTest extends TestCase
 
         $user = User::query()->where('email', 'alice@billflow.test')->firstOrFail();
         $this->assertCount(1, $user->companies);
+        $company = $user->companies->first();
+        $this->assertEquals($user->id, $company->owner_id);
+        $this->assertTrue($user->isOwnerOf($company));
     }
 
     public function test_user_can_login_with_valid_credentials(): void

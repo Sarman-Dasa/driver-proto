@@ -32,6 +32,10 @@ class SubscriptionResource extends JsonResource
             'current_period_start' => $this->current_period_start?->toIso8601String(),
             'current_period_end' => $this->current_period_end?->toIso8601String(),
             'cancel_at_period_end' => (bool) $this->cancel_at_period_end,
+            'cancelled_at' => $this->cancelled_at?->toIso8601String(),
+            'stripe_subscription_id' => $this->stripe_subscription_id,
+            'stripe_price_id' => $this->stripe_price_id,
+            'billing_interval' => $this->billing_interval,
             'plan' => new PlanResource($this->whenLoaded('plan')),
         ];
     }

@@ -16,9 +16,13 @@ use App\Http\Controllers\Api\V1\Plan\PlanController;
 use App\Http\Controllers\Api\V1\Product\ProductController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Role\RoleController;
+use App\Http\Controllers\Api\V1\Subscription\BillingController;
+use App\Http\Controllers\Api\V1\Webhook\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
+    // Phase 9: Stripe Webhooks (unauthenticated, signature-verified)
+    Route::post('webhooks/stripe', StripeWebhookController::class)->name('api.v1.webhooks.stripe');
     // Guest authentication routes with endpoint-specific rate limiters
     Route::prefix('auth')->group(function (): void {
         Route::post('register', [AuthController::class, 'register'])
@@ -174,6 +178,28 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{company}/invoices/{invoice}/deliveries', [InvoiceController::class, 'deliveries'])
                 ->middleware('company.access')
                 ->name('api.v1.companies.invoices.deliveries');
+
+            // Phase 9: Subscription & Stripe Billing
+            Route::prefix('{company}/subscription')->middleware('company.access')->group(function (): void {
+                Route::get('/', [BillingController::class, 'show'])
+                    ->middleware('company.permission:billing.view')
+                    ->name('api.v1.companies.subscription.show');
+                Route::post('checkout', [BillingController::class, 'checkout'])
+                    ->middleware('company.permission:billing.manage')
+                    ->name('api.v1.companies.subscription.checkout');
+                Route::post('portal', [BillingController::class, 'portal'])
+                    ->middleware('company.permission:billing.manage')
+                    ->name('api.v1.companies.subscription.portal');
+                Route::post('cancel', [BillingController::class, 'cancel'])
+                    ->middleware('company.permission:billing.manage')
+                    ->name('api.v1.companies.subscription.cancel');
+                Route::post('resume', [BillingController::class, 'resume'])
+                    ->middleware('company.permission:billing.manage')
+                    ->name('api.v1.companies.subscription.resume');
+                Route::get('history', [BillingController::class, 'history'])
+                    ->middleware('company.permission:billing.view')
+                    ->name('api.v1.companies.subscription.history');
+            });
         });
     });
 

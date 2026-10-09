@@ -132,18 +132,8 @@
                         </v-btn>
 
                         <v-btn
-                            v-else-if="plan.slug === 'pro'"
-                            color="primary"
-                            variant="flat"
-                            block
-                            size="large"
-                            class="rounded-lg font-weight-bold text-none text-white pro-cta-btn elevation-2"
-                        >
-                            Choose Pro
-                        </v-btn>
-
-                        <v-btn
                             v-else-if="plan.price_monthly === 0"
+                            disabled
                             variant="outlined"
                             color="primary"
                             block
@@ -154,12 +144,27 @@
                         </v-btn>
 
                         <v-btn
+                            v-else-if="plan.slug === 'pro'"
+                            color="primary"
+                            variant="flat"
+                            block
+                            size="large"
+                            class="rounded-lg font-weight-bold text-none text-white pro-cta-btn elevation-2"
+                            :loading="checkoutLoading === plan.id"
+                            @click="selectPlan(plan)"
+                        >
+                            Choose Pro
+                        </v-btn>
+
+                        <v-btn
                             v-else
                             color="#0F172A"
                             variant="flat"
                             block
                             size="large"
                             class="rounded-lg font-weight-bold text-none text-white biz-cta-btn"
+                            :loading="checkoutLoading === plan.id"
+                            @click="selectPlan(plan)"
                         >
                             Choose Business
                         </v-btn>
@@ -217,20 +222,58 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import { useCompanyStore } from '@/stores/company';
 import { useSubscriptionStore } from '@/stores/subscription';
 import type { Plan, PlanFeatureConfig } from '@/types';
 
+const router = useRouter();
+const authStore = useAuthStore();
+const companyStore = useCompanyStore();
 const subscriptionStore = useSubscriptionStore();
-const plans = ref<Plan[]>([]);
+const plans = computed(() => subscriptionStore.availablePlans);
 const loading = ref(true);
+const checkoutLoading = ref<number | null>(null);
 const billingCycle = ref<'monthly' | 'yearly'>('monthly');
 
 const currentPlanSlug = computed(() => subscriptionStore.currentPlan?.slug || null);
 
+const selectPlan = async (plan: Plan) => {
+    if (!authStore.isAuthenticated) {
+        router.push({ name: 'register', query: { plan: plan.slug } });
+        return;
+    }
+
+    const companyId = companyStore.currentCompany?.id || Number(localStorage.getItem('billflow_current_company_id'));
+    if (!companyId) {
+        alert('Please select or create a workspace first.');
+        return;
+    }
+
+    checkoutLoading.value = plan.id;
+    try {
+        const checkoutUrl = await subscriptionStore.checkout(plan.id, billingCycle.value, companyId);
+        window.location.href = checkoutUrl;
+    } catch (e: any) {
+        alert(e.message || 'Unable to initiate checkout session.');
+    } finally {
+        checkoutLoading.value = null;
+    }
+};
+
 onMounted(async () => {
     loading.value = true;
     try {
-        plans.value = await subscriptionStore.fetchPlans();
+        await subscriptionStore.fetchPlans();
+        if (authStore.isAuthenticated) {
+            if (!companyStore.currentCompany) {
+                await companyStore.fetchCompanies();
+            }
+            if (companyStore.currentCompany) {
+                await subscriptionStore.fetchPlan(companyStore.currentCompany.id);
+            }
+        }
     } finally {
         loading.value = false;
     }

@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'tax_number',
     'currency',
     'timezone',
+    'stripe_customer_id',
 ])]
 class Company extends Model
 {
@@ -133,6 +134,16 @@ class Company extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Billing history records for this company.
+     *
+     * @return HasMany<BillingHistory, $this>
+     */
+    public function billingHistories(): HasMany
+    {
+        return $this->hasMany(BillingHistory::class);
     }
 
     /**

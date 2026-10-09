@@ -157,6 +157,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasPermissionInCompany(Company|int|string $company, string $permission): bool
     {
+        $companyId = $company instanceof Company ? $company->id : (int) $company;
+
+        if ($this->isOwnerOf($companyId)) {
+            return true;
+        }
+
         $role = $this->roleInCompany($company);
 
         if (! $role) {

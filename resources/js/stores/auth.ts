@@ -57,6 +57,11 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await apiClient.post<ApiResponse<{ user: User; token: string }>>('/auth/login', payload);
             setToken(response.data.data.token);
             user.value = response.data.data.user;
+
+            const firstCompany = response.data.data.user?.companies?.find((c) => c.is_active) || response.data.data.user?.companies?.[0];
+            if (firstCompany) {
+                localStorage.setItem('billflow_current_company_id', String(firstCompany.id));
+            }
         } finally {
             loading.value = false;
         }
@@ -68,6 +73,11 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await apiClient.post<ApiResponse<{ user: User; token: string }>>('/auth/register', payload);
             setToken(response.data.data.token);
             user.value = response.data.data.user;
+
+            const firstCompany = response.data.data.user?.companies?.find((c) => c.is_active) || response.data.data.user?.companies?.[0];
+            if (firstCompany) {
+                localStorage.setItem('billflow_current_company_id', String(firstCompany.id));
+            }
         } finally {
             loading.value = false;
         }

@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Auth;
 
-use App\Enums\CompanyStatus;
+use App\Actions\Company\CreateCompanyAction;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class RegisterUserAction
 {
+    public function __construct(
+        private readonly CreateCompanyAction $createCompanyAction,
+    ) {}
+
     /**
      * Execute the registration action.
      *
@@ -33,18 +36,10 @@ class RegisterUserAction
                 ? trim($data['company_name'])
                 : $user->name."'s Workspace";
 
-            $baseSlug = Str::slug($companyName);
-            $slug = $baseSlug ?: 'workspace';
-            $uniqueSlug = $slug.'-'.Str::lower(Str::random(6));
-
-            $company = Company::create([
+            $company = $this->createCompanyAction->execute($user, [
                 'name' => $companyName,
-                'slug' => $uniqueSlug,
                 'email' => $user->email,
-                'status' => CompanyStatus::Active,
             ]);
-
-            $user->companies()->attach($company->id, ['role_id' => null]);
 
             event(new Registered($user));
 

@@ -9,10 +9,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'company_id',
     'plan_id',
+    'stripe_subscription_id',
+    'stripe_price_id',
+    'billing_interval',
     'status',
     'starts_at',
     'ends_at',
@@ -20,6 +24,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'current_period_start',
     'current_period_end',
     'cancel_at_period_end',
+    'cancelled_at',
+    'last_stripe_event_created_at',
 ])]
 class Subscription extends Model
 {
@@ -40,6 +46,8 @@ class Subscription extends Model
             'current_period_start' => 'datetime',
             'current_period_end' => 'datetime',
             'cancel_at_period_end' => 'boolean',
+            'cancelled_at' => 'datetime',
+            'last_stripe_event_created_at' => 'datetime',
         ];
     }
 
@@ -61,6 +69,16 @@ class Subscription extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    /**
+     * Billing history records for this subscription.
+     *
+     * @return HasMany<BillingHistory, $this>
+     */
+    public function billingHistories(): HasMany
+    {
+        return $this->hasMany(BillingHistory::class);
     }
 
     /**

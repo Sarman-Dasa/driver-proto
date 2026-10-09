@@ -204,7 +204,37 @@ export interface Subscription {
     current_period_start: string | null;
     current_period_end: string | null;
     cancel_at_period_end: boolean;
+    cancelled_at?: string | null;
+    stripe_subscription_id?: string | null;
+    stripe_price_id?: string | null;
+    billing_interval?: 'monthly' | 'yearly';
     plan?: Plan;
+}
+
+export interface BillingHistory {
+    id: number;
+    company_id: number;
+    subscription_id: number | null;
+    stripe_invoice_id: string | null;
+    stripe_payment_intent_id: string | null;
+    type: string;
+    amount: number;
+    formatted_amount: string;
+    currency: string;
+    status: 'paid' | 'failed' | 'refunded' | 'pending';
+    billing_reason: string | null;
+    hosted_invoice_url: string | null;
+    invoice_pdf_url: string | null;
+    description: string | null;
+    event_at: string;
+    created_at: string;
+}
+
+export interface BillingHistoryPagination {
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
 }
 
 export interface CompanyFeatureStatus {

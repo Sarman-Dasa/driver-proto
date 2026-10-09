@@ -141,12 +141,20 @@ class PlanAndFeatureSeeder extends Seeder
                 'description' => 'Ideal for growing businesses needing expense tracking and automation.',
                 'price_monthly' => 1900,
                 'price_yearly' => 19000,
+                'stripe_monthly_price_id' => 'price_pro_monthly',
+                'stripe_yearly_price_id' => 'price_pro_yearly',
                 'currency' => 'USD',
                 'is_active' => true,
                 'is_default' => false,
                 'sort_order' => 2,
             ],
         );
+        if (empty($proPlan->stripe_monthly_price_id)) {
+            $proPlan->update([
+                'stripe_monthly_price_id' => 'price_pro_monthly',
+                'stripe_yearly_price_id' => 'price_pro_yearly',
+            ]);
+        }
 
         $businessPlan = Plan::query()->firstOrCreate(
             ['slug' => Plan::BUSINESS],
@@ -155,12 +163,20 @@ class PlanAndFeatureSeeder extends Seeder
                 'description' => 'Full-scale financial operations with team collaboration and API access.',
                 'price_monthly' => 4900,
                 'price_yearly' => 49000,
+                'stripe_monthly_price_id' => 'price_business_monthly',
+                'stripe_yearly_price_id' => 'price_business_yearly',
                 'currency' => 'USD',
                 'is_active' => true,
                 'is_default' => false,
                 'sort_order' => 3,
             ],
         );
+        if (empty($businessPlan->stripe_monthly_price_id)) {
+            $businessPlan->update([
+                'stripe_monthly_price_id' => 'price_business_monthly',
+                'stripe_yearly_price_id' => 'price_business_yearly',
+            ]);
+        }
 
         // 3. Map Plan Features
         $freeFeatures = [

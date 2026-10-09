@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'price_monthly',
     'price_yearly',
     'currency',
+    'stripe_monthly_price_id',
+    'stripe_yearly_price_id',
     'is_active',
     'is_default',
     'sort_order',
