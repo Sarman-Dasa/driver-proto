@@ -6,6 +6,8 @@ import type {
     CreateInvoicePayload,
     UpdateInvoicePayload,
     InvoiceFilterParams,
+    InvoiceDelivery,
+    SendInvoiceEmailPayload,
 } from '@/types';
 
 export const invoiceService = {
@@ -113,6 +115,50 @@ export const invoiceService = {
     ): Promise<ApiResponse<Invoice>> {
         const response = await apiClient.post<ApiResponse<Invoice>>(
             `/companies/${companyId}/invoices/${invoiceId}/cancel`
+        );
+        return response.data;
+    },
+
+    /**
+     * Download or stream the invoice PDF as a Blob.
+     */
+    async downloadPdf(
+        companyId: number | string,
+        invoiceId: number | string
+    ): Promise<Blob> {
+        const response = await apiClient.get(
+            `/companies/${companyId}/invoices/${invoiceId}/pdf`,
+            {
+                responseType: 'blob',
+            }
+        );
+        return response.data;
+    },
+
+    /**
+     * Send invoice via email with attached PDF.
+     */
+    async sendEmail(
+        companyId: number | string,
+        invoiceId: number | string,
+        payload: SendInvoiceEmailPayload
+    ): Promise<ApiResponse<InvoiceDelivery>> {
+        const response = await apiClient.post<ApiResponse<InvoiceDelivery>>(
+            `/companies/${companyId}/invoices/${invoiceId}/email`,
+            payload
+        );
+        return response.data;
+    },
+
+    /**
+     * Get delivery logs for an invoice.
+     */
+    async getDeliveries(
+        companyId: number | string,
+        invoiceId: number | string
+    ): Promise<ApiResponse<InvoiceDelivery[]>> {
+        const response = await apiClient.get<ApiResponse<InvoiceDelivery[]>>(
+            `/companies/${companyId}/invoices/${invoiceId}/deliveries`
         );
         return response.data;
     },

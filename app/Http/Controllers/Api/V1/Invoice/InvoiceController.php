@@ -9,18 +9,23 @@ use App\Actions\Invoice\CreateInvoiceAction;
 use App\Actions\Invoice\DeleteInvoiceAction;
 use App\Actions\Invoice\RestoreInvoiceAction;
 use App\Actions\Invoice\SendInvoiceAction;
+use App\Actions\Invoice\SendInvoiceEmailAction;
 use App\Actions\Invoice\UpdateInvoiceAction;
 use App\Enums\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Invoice\CreateInvoiceRequest;
+use App\Http\Requests\Api\V1\Invoice\SendInvoiceEmailRequest;
 use App\Http\Requests\Api\V1\Invoice\UpdateInvoiceRequest;
+use App\Http\Resources\Api\V1\InvoiceDeliveryResource;
 use App\Http\Resources\Api\V1\InvoiceResource;
 use App\Models\Company;
 use App\Models\Invoice;
+use App\Services\InvoicePdfService;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class InvoiceController extends Controller
 {
@@ -138,7 +143,7 @@ class InvoiceController extends Controller
 
         $this->authorize('view', [$invoice, $company]);
 
-        $invoice->load(['customer', 'items.product']);
+        $invoice->load(['customer', 'items.product', 'deliveries']);
 
         return ApiResponse::success(
             new InvoiceResource($invoice),
@@ -259,6 +264,70 @@ class InvoiceController extends Controller
         return ApiResponse::success(
             new InvoiceResource($invoice),
             'Invoice cancelled successfully.',
+        );
+    }
+
+    /**
+     * Download or stream the invoice PDF.
+     */
+    public function pdf(
+        Request $request,
+        Company $company,
+        Invoice $invoice,
+        InvoicePdfService $pdfService,
+    ): Response|JsonResponse {
+        if ((int) $invoice->company_id !== (int) $company->id) {
+            return ApiResponse::error('Invoice not found.', [], 404);
+        }
+
+        $this->authorize('view', [$invoice, $company]);
+
+        $attachment = $request->boolean('download', true);
+
+        return $pdfService->downloadResponse($invoice, $attachment);
+    }
+
+    /**
+     * Send the invoice via email with attached PDF.
+     */
+    public function email(
+        SendInvoiceEmailRequest $request,
+        Company $company,
+        Invoice $invoice,
+        SendInvoiceEmailAction $action,
+    ): JsonResponse {
+        if ((int) $invoice->company_id !== (int) $company->id) {
+            return ApiResponse::error('Invoice not found.', [], 404);
+        }
+
+        $this->authorize('send', [$invoice, $company]);
+
+        $delivery = $action->execute($company, $invoice, $request->validated(), $request->user());
+
+        return ApiResponse::success(
+            new InvoiceDeliveryResource($delivery),
+            'Invoice email queued for delivery.',
+        );
+    }
+
+    /**
+     * Get delivery history for an invoice.
+     */
+    public function deliveries(
+        Company $company,
+        Invoice $invoice,
+    ): JsonResponse {
+        if ((int) $invoice->company_id !== (int) $company->id) {
+            return ApiResponse::error('Invoice not found.', [], 404);
+        }
+
+        $this->authorize('view', [$invoice, $company]);
+
+        $deliveries = $invoice->deliveries()->latest()->get();
+
+        return ApiResponse::success(
+            InvoiceDeliveryResource::collection($deliveries),
+            'Invoice deliveries retrieved successfully.',
         );
     }
 }

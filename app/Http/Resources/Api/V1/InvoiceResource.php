@@ -62,6 +62,7 @@ class InvoiceResource extends JsonResource
             'deleted_at' => $this->deleted_at?->toISOString(),
             'customer' => $this->whenLoaded('customer', fn () => CustomerResource::make($this->customer)),
             'items' => InvoiceItemResource::collection($this->whenLoaded('items')),
+            'deliveries' => InvoiceDeliveryResource::collection($this->whenLoaded('deliveries')),
         ];
     }
 }

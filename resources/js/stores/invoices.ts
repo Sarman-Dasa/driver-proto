@@ -7,6 +7,8 @@ import type {
     UpdateInvoicePayload,
     InvoiceFilterParams,
     Pagination,
+    InvoiceDelivery,
+    SendInvoiceEmailPayload,
 } from '@/types';
 
 export const useInvoiceStore = defineStore('invoices', () => {
@@ -293,6 +295,107 @@ export const useInvoiceStore = defineStore('invoices', () => {
         }
     };
 
+    /**
+     * Download invoice PDF and trigger file download in browser.
+     */
+    const downloadPdf = async (
+        invoiceId: number | string,
+        invoiceNumber?: string,
+        companyId?: number | string
+    ): Promise<void> => {
+        const targetCompanyId = companyId || localStorage.getItem('billflow_current_company_id');
+        if (!targetCompanyId) {
+            throw new Error('No active company workspace.');
+        }
+
+        loading.value = true;
+        error.value = null;
+        try {
+            const blob = await invoiceService.downloadPdf(targetCompanyId, invoiceId);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Invoice-${invoiceNumber || invoiceId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err: unknown) {
+            const apiErr = err as { response?: { data?: { message?: string } } };
+            error.value = apiErr.response?.data?.message || 'Failed to download invoice PDF.';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    /**
+     * Send invoice via email.
+     */
+    const sendEmail = async (
+        invoiceId: number | string,
+        payload: SendInvoiceEmailPayload,
+        companyId?: number | string
+    ): Promise<InvoiceDelivery> => {
+        const targetCompanyId = companyId || localStorage.getItem('billflow_current_company_id');
+        if (!targetCompanyId) {
+            throw new Error('No active company workspace.');
+        }
+
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await invoiceService.sendEmail(targetCompanyId, invoiceId, payload);
+            const delivery = response.data;
+
+            // Update current invoice in store if active
+            if (currentInvoice.value && String(currentInvoice.value.id) === String(invoiceId)) {
+                if (!currentInvoice.value.deliveries) {
+                    currentInvoice.value.deliveries = [];
+                }
+                currentInvoice.value.deliveries.unshift(delivery);
+                if (currentInvoice.value.status === 'draft') {
+                    currentInvoice.value.status = 'sent';
+                    currentInvoice.value.status_label = 'Sent';
+                    currentInvoice.value.can_be_sent = false;
+                    currentInvoice.value.is_editable = false;
+                }
+            }
+            return delivery;
+        } catch (err: unknown) {
+            const apiErr = err as { response?: { data?: { message?: string } } };
+            error.value = apiErr.response?.data?.message || 'Failed to send invoice email.';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    /**
+     * Fetch delivery logs for an invoice.
+     */
+    const fetchDeliveries = async (
+        invoiceId: number | string,
+        companyId?: number | string
+    ): Promise<InvoiceDelivery[]> => {
+        const targetCompanyId = companyId || localStorage.getItem('billflow_current_company_id');
+        if (!targetCompanyId) {
+            return [];
+        }
+
+        try {
+            const response = await invoiceService.getDeliveries(targetCompanyId, invoiceId);
+            if (currentInvoice.value && String(currentInvoice.value.id) === String(invoiceId)) {
+                currentInvoice.value.deliveries = response.data;
+            }
+            return response.data;
+        } catch (err: unknown) {
+            const apiErr = err as { response?: { data?: { message?: string } } };
+            error.value = apiErr.response?.data?.message || 'Failed to fetch invoice deliveries.';
+            return [];
+        }
+    };
+
     return {
         invoices,
         currentInvoice,
@@ -309,5 +412,8 @@ export const useInvoiceStore = defineStore('invoices', () => {
         restoreInvoice,
         sendInvoice,
         cancelInvoice,
+        downloadPdf,
+        sendEmail,
+        fetchDeliveries,
     };
 });

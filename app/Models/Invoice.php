@@ -106,6 +106,16 @@ class Invoice extends Model
     }
 
     /**
+     * Invoice delivery attempts and history.
+     *
+     * @return HasMany<InvoiceDelivery, $this>
+     */
+    public function deliveries(): HasMany
+    {
+        return $this->hasMany(InvoiceDelivery::class)->latest();
+    }
+
+    /**
      * User who created the invoice.
      *
      * @return BelongsTo<User, $this>

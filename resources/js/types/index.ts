@@ -433,6 +433,7 @@ export interface Invoice {
     deleted_at?: string | null;
     customer?: Customer;
     items?: InvoiceItem[];
+    deliveries?: InvoiceDelivery[];
 }
 
 export interface InvoiceItemPayload {
@@ -480,6 +481,26 @@ export interface InvoiceFilterParams {
     per_page?: number;
 }
 
+// Phase 8: Invoice PDF & Email Delivery
+export type InvoiceDeliveryStatus = 'queued' | 'sent' | 'failed';
 
+export interface InvoiceDelivery {
+    id: number;
+    invoice_id: number;
+    recipient_email: string;
+    subject: string;
+    message?: string | null;
+    status: InvoiceDeliveryStatus;
+    status_label?: string;
+    attempts: number;
+    sent_at?: string | null;
+    failed_at?: string | null;
+    error_message?: string | null;
+    created_at: string;
+}
 
-
+export interface SendInvoiceEmailPayload {
+    recipient_email: string;
+    subject: string;
+    message?: string;
+}

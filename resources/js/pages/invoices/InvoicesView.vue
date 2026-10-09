@@ -283,6 +283,22 @@
                                         @click="viewInvoice(invoice)"
                                     ></v-list-item>
 
+                                    <!-- Download PDF -->
+                                    <v-list-item
+                                        prepend-icon="mdi-file-pdf-box"
+                                        title="Download PDF"
+                                        @click="downloadPdf(invoice)"
+                                    ></v-list-item>
+
+                                    <!-- Send via Email -->
+                                    <v-list-item
+                                        v-if="invoice.status !== 'cancelled' && permissionsStore.can('invoices.send')"
+                                        prepend-icon="mdi-email-send-outline"
+                                        title="Email Invoice"
+                                        color="primary"
+                                        @click="openEmailDialog(invoice)"
+                                    ></v-list-item>
+
                                     <!-- Edit Draft -->
                                     <v-list-item
                                         v-if="invoice.is_editable && permissionsStore.can('invoices.update')"
@@ -291,12 +307,11 @@
                                         :to="{ name: 'invoices.edit', params: { invoice: invoice.id } }"
                                     ></v-list-item>
 
-                                    <!-- Send Invoice -->
+                                    <!-- Finalize Send Invoice -->
                                     <v-list-item
                                         v-if="invoice.can_be_sent && permissionsStore.can('invoices.send')"
-                                        prepend-icon="mdi-send-outline"
-                                        title="Send Invoice"
-                                        color="primary"
+                                        prepend-icon="mdi-check-circle-outline"
+                                        title="Mark as Sent"
                                         @click="promptSend(invoice)"
                                     ></v-list-item>
 
@@ -418,21 +433,104 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Send via Email Dialog -->
+        <v-dialog v-model="emailDialog" max-width="560">
+            <v-card class="rounded-xl pa-4">
+                <v-card-title class="d-flex align-center gap-2 text-h6 font-weight-bold">
+                    <v-icon icon="mdi-email-send-outline" color="primary"></v-icon>
+                    Email Invoice {{ selectedInvoice?.invoice_number }}
+                </v-card-title>
+                <v-card-text class="py-2">
+                    <div class="text-body-2 text-medium-emphasis mb-4">
+                        Send this invoice directly to the customer. A professional PDF invoice will be automatically attached.
+                    </div>
+
+                    <v-form ref="emailFormRef" v-model="emailFormValid" @submit.prevent="handleSendEmail">
+                        <!-- Recipient Email -->
+                        <v-text-field
+                            v-model="emailPayload.recipient_email"
+                            label="Recipient Email *"
+                            variant="outlined"
+                            density="comfortable"
+                            type="email"
+                            :rules="[rules.required, rules.email]"
+                            placeholder="customer@example.com"
+                            class="mb-3"
+                        ></v-text-field>
+
+                        <!-- Subject -->
+                        <v-text-field
+                            v-model="emailPayload.subject"
+                            label="Subject Line *"
+                            variant="outlined"
+                            density="comfortable"
+                            :rules="[rules.required]"
+                            class="mb-3"
+                        ></v-text-field>
+
+                        <!-- Custom Message -->
+                        <v-textarea
+                            v-model="emailPayload.message"
+                            label="Message Note (Optional)"
+                            variant="outlined"
+                            density="comfortable"
+                            rows="3"
+                            placeholder="Add a personalized message or instructions for the recipient..."
+                            class="mb-2"
+                        ></v-textarea>
+
+                        <!-- Attachment Indicator -->
+                        <v-alert
+                            type="info"
+                            variant="tonal"
+                            density="compact"
+                            icon="mdi-paperclip"
+                            class="rounded-lg text-caption"
+                        >
+                            Attached: <strong>Invoice-{{ selectedInvoice?.invoice_number }}.pdf</strong> (Autoritative snapshot PDF)
+                        </v-alert>
+                    </v-form>
+                </v-card-text>
+                <v-card-actions class="d-flex justify-end gap-2 pt-4">
+                    <v-btn variant="text" class="text-none" :disabled="actionLoading" @click="emailDialog = false">
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        color="primary"
+                        variant="flat"
+                        class="text-none font-weight-bold"
+                        :loading="actionLoading"
+                        :disabled="!emailFormValid"
+                        @click="handleSendEmail"
+                    >
+                        Send Invoice
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Notification Snackbar -->
+        <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="4000" location="bottom end">
+            {{ snackbarText }}
+        </v-snackbar>
     </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useInvoiceStore } from '@/stores/invoices';
 import { useCustomerStore } from '@/stores/customers';
+import { useCompanyStore } from '@/stores/company';
 import { usePermissionsStore } from '@/stores/permissions';
 import { useSubscriptionStore } from '@/stores/subscription';
-import type { Invoice, InvoiceStatus } from '@/types';
+import type { Invoice, InvoiceStatus, SendInvoiceEmailPayload } from '@/types';
 
 const router = useRouter();
 const invoiceStore = useInvoiceStore();
 const customerStore = useCustomerStore();
+const companyStore = useCompanyStore();
 const permissionsStore = usePermissionsStore();
 const subscriptionStore = useSubscriptionStore();
 
@@ -443,6 +541,23 @@ const selectedInvoice = ref<Invoice | null>(null);
 const sendDialog = ref(false);
 const cancelDialog = ref(false);
 const deleteDialog = ref(false);
+const emailDialog = ref(false);
+const emailFormValid = ref(false);
+
+const emailPayload = reactive<SendInvoiceEmailPayload>({
+    recipient_email: '',
+    subject: '',
+    message: '',
+});
+
+const snackbar = ref(false);
+const snackbarText = ref('');
+const snackbarColor = ref('success');
+
+const rules = {
+    required: (v: string) => !!v || 'Field is required',
+    email: (v: string) => /.+@.+\..+/.test(v) || 'Must be a valid email address',
+};
 
 const statusOptions = [
     { title: 'All Invoices', value: 'all' },
@@ -561,6 +676,54 @@ const confirmDelete = async () => {
         await invoiceStore.deleteInvoice(selectedInvoice.value.id);
         deleteDialog.value = false;
         refreshList();
+    } finally {
+        actionLoading.value = false;
+    }
+};
+
+const downloadPdf = async (invoice: Invoice) => {
+    try {
+        await invoiceStore.downloadPdf(invoice.id, invoice.invoice_number);
+        snackbarText.value = `Downloaded PDF for ${invoice.invoice_number}.`;
+        snackbarColor.value = 'success';
+        snackbar.value = true;
+    } catch {
+        snackbarText.value = invoiceStore.error || 'Failed to download PDF.';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+    }
+};
+
+const openEmailDialog = (invoice: Invoice) => {
+    selectedInvoice.value = invoice;
+    const snap = invoice.customer_snapshot || invoice.customer;
+    const companyName = companyStore.currentCompany?.name || 'BillFlow';
+
+    emailPayload.recipient_email = snap?.email || '';
+    emailPayload.subject = `Invoice ${invoice.invoice_number} from ${companyName}`;
+    emailPayload.message = `Please find attached your invoice ${invoice.invoice_number}. Please let us know if you have any questions.`;
+
+    emailDialog.value = true;
+};
+
+const handleSendEmail = async () => {
+    if (!selectedInvoice.value || !emailPayload.recipient_email) return;
+    actionLoading.value = true;
+    try {
+        await invoiceStore.sendEmail(selectedInvoice.value.id, {
+            recipient_email: emailPayload.recipient_email,
+            subject: emailPayload.subject,
+            message: emailPayload.message,
+        });
+        emailDialog.value = false;
+        snackbarText.value = `Invoice email queued for delivery to ${emailPayload.recipient_email}.`;
+        snackbarColor.value = 'success';
+        snackbar.value = true;
+        refreshList();
+    } catch {
+        snackbarText.value = invoiceStore.error || 'Failed to queue invoice email.';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
     } finally {
         actionLoading.value = false;
     }

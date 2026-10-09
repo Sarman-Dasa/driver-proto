@@ -165,6 +165,15 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{company}/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])
                 ->middleware('company.access')
                 ->name('api.v1.companies.invoices.cancel');
+            Route::get('{company}/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.pdf');
+            Route::post('{company}/invoices/{invoice}/email', [InvoiceController::class, 'email'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.email');
+            Route::get('{company}/invoices/{invoice}/deliveries', [InvoiceController::class, 'deliveries'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.deliveries');
         });
     });
 
