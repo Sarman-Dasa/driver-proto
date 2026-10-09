@@ -156,6 +156,16 @@ class Company extends Model
     }
 
     /**
+     * Invoices belonging to this company.
+     *
+     * @return HasMany<Invoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /**
      * Get the current active subscription for this company.
      */
     public function currentSubscription(): ?Subscription

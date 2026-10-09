@@ -23,6 +23,7 @@ class UsageResolver
             new TeamMembersUsageProvider,
             new CustomersUsageProvider,
             new ProductsUsageProvider,
+            new InvoicesUsageProvider,
         ];
     }
 

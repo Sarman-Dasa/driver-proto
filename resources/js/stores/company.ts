@@ -5,6 +5,7 @@ import { usePermissionsStore } from '@/stores/permissions';
 import { useSubscriptionStore } from '@/stores/subscription';
 import { useCustomerStore } from '@/stores/customers';
 import { useProductStore } from '@/stores/products';
+import { useInvoiceStore } from '@/stores/invoices';
 import type { Company, CreateCompanyPayload, UpdateCompanyPayload, CompanyMember, Role, ApiResponse } from '@/types';
 
 export const useCompanyStore = defineStore('company', () => {
@@ -12,6 +13,7 @@ export const useCompanyStore = defineStore('company', () => {
     const subscriptionStore = useSubscriptionStore();
     const customerStore = useCustomerStore();
     const productStore = useProductStore();
+    const invoiceStore = useInvoiceStore();
     const companies = ref<Company[]>([]);
     const currentCompany = ref<Company | null>(null);
     const loading = ref(false);
@@ -24,12 +26,14 @@ export const useCompanyStore = defineStore('company', () => {
             subscriptionStore.fetchPlan(company.id);
             customerStore.clear();
             productStore.clear();
+            invoiceStore.clear();
         } else {
             localStorage.removeItem('billflow_current_company_id');
             permissionsStore.clear();
             subscriptionStore.clear();
             customerStore.clear();
             productStore.clear();
+            invoiceStore.clear();
         }
     };
 
@@ -39,6 +43,7 @@ export const useCompanyStore = defineStore('company', () => {
     const clearCompanyScopedData = () => {
         customerStore.clear();
         productStore.clear();
+        invoiceStore.clear();
 
         // Dispatches workspace change event for future company-scoped modules
         window.dispatchEvent(new CustomEvent('billflow:workspace-changed', {

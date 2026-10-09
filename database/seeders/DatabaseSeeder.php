@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Actions\Invoice\CreateInvoiceAction;
+use App\Actions\Invoice\SendInvoiceAction;
 use App\Enums\CompanyStatus;
+use App\Enums\CustomerStatus;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\SubscriptionStatus;
 use App\Models\Company;
+use App\Models\Customer;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Role;
@@ -190,5 +194,93 @@ class DatabaseSeeder extends Seeder
                 'status' => ProductStatus::Active,
             ]
         );
+
+        // Seed sample customers
+        $acmeCustomer = Customer::query()->firstOrCreate(
+            ['company_id' => $company->id, 'email' => 'client@globex.test'],
+            [
+                'name' => 'Hank Scorpio',
+                'company_name' => 'Globex Corporation',
+                'phone' => '+1 555-4321',
+                'billing_address' => '100 Cypress Creek Way',
+                'billing_city' => 'Cypress Creek',
+                'billing_state' => 'OR',
+                'billing_postal_code' => '97401',
+                'billing_country' => 'USA',
+                'status' => CustomerStatus::Active,
+            ]
+        );
+
+        $starkCustomer = Customer::query()->firstOrCreate(
+            ['company_id' => $secondaryCompany->id, 'email' => 'rhodey@defense.gov'],
+            [
+                'name' => 'James Rhodes',
+                'company_name' => 'Department of Defense',
+                'phone' => '+1 555-8899',
+                'billing_address' => 'The Pentagon',
+                'billing_city' => 'Arlington',
+                'billing_state' => 'VA',
+                'billing_postal_code' => '22202',
+                'billing_country' => 'USA',
+                'status' => CustomerStatus::Active,
+            ]
+        );
+
+        // Seed sample invoices if none exist
+        if ($company->invoices()->count() === 0) {
+            /** @var CreateInvoiceAction $createInvoiceAction */
+            $createInvoiceAction = app(CreateInvoiceAction::class);
+
+            $inv1 = $createInvoiceAction->execute($company, [
+                'customer_id' => $acmeCustomer->id,
+                'issue_date' => now()->format('Y-m-d'),
+                'due_date' => now()->addDays(30)->format('Y-m-d'),
+                'currency' => 'USD',
+                'discount_type' => 'percentage',
+                'discount_value' => 10.0,
+                'notes' => 'Thank you for partnering with Acme Corporation.',
+                'terms' => 'Payment due within 30 days of issue.',
+                'items' => [
+                    [
+                        'product_name' => 'Website Development',
+                        'description' => 'Custom full-stack web application development',
+                        'quantity' => 1,
+                        'unit' => 'project',
+                        'unit_price' => 200000,
+                        'tax_rate' => 18.0,
+                    ],
+                    [
+                        'product_name' => 'Cloud Hosting & Maintenance',
+                        'description' => 'Monthly dedicated high-availability hosting',
+                        'quantity' => 12,
+                        'unit' => 'month',
+                        'unit_price' => 20000,
+                        'tax_rate' => 10.0,
+                    ],
+                ],
+            ], $user);
+
+            // Mark invoice 1 as sent
+            app(SendInvoiceAction::class)->execute($company, $inv1, $user);
+
+            // Create draft invoice 2
+            $createInvoiceAction->execute($company, [
+                'customer_id' => $acmeCustomer->id,
+                'issue_date' => now()->format('Y-m-d'),
+                'due_date' => now()->addDays(14)->format('Y-m-d'),
+                'currency' => 'USD',
+                'notes' => 'Draft invoice for upcoming consultation services.',
+                'items' => [
+                    [
+                        'product_name' => 'Developer Workstation Laptop',
+                        'description' => 'Configured hardware setup',
+                        'quantity' => 2,
+                        'unit' => 'piece',
+                        'unit_price' => 150000,
+                        'tax_rate' => 5.0,
+                    ],
+                ],
+            ], $user);
+        }
     }
 }

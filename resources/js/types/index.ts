@@ -363,5 +363,123 @@ export interface ProductFilterParams {
     per_page?: number;
 }
 
+// Phase 7: Invoices Types
+export type InvoiceStatus = 'draft' | 'sent' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled';
+export type DiscountType = 'none' | 'percentage' | 'fixed';
+
+export interface InvoiceItem {
+    id?: number;
+    invoice_id?: number;
+    product_id?: number | null;
+    product_name: string;
+    description?: string | null;
+    quantity: number;
+    unit?: string | null;
+    unit_price: number;
+    unit_price_decimal?: number;
+    formatted_unit_price?: string;
+    tax_rate: number;
+    tax_amount?: number;
+    tax_amount_decimal?: number;
+    formatted_tax_amount?: string;
+    subtotal?: number;
+    subtotal_decimal?: number;
+    formatted_subtotal?: string;
+    total?: number;
+    total_decimal?: number;
+    formatted_total?: string;
+    sort_order?: number;
+}
+
+export interface Invoice {
+    id: number;
+    company_id: number;
+    customer_id: number;
+    invoice_number: string;
+    status: InvoiceStatus;
+    status_label?: string;
+    is_editable: boolean;
+    can_be_sent: boolean;
+    can_be_cancelled: boolean;
+    issue_date: string;
+    due_date: string;
+    currency: string;
+    subtotal: number;
+    subtotal_decimal: number;
+    formatted_subtotal: string;
+    discount_type: DiscountType;
+    discount_value: number;
+    discount_amount: number;
+    discount_amount_decimal: number;
+    formatted_discount_amount: string;
+    tax_amount: number;
+    tax_amount_decimal: number;
+    formatted_tax_amount: string;
+    total_amount: number;
+    total_amount_decimal: number;
+    formatted_total_amount: string;
+    amount_paid: number;
+    amount_paid_decimal: number;
+    balance_due: number;
+    balance_due_decimal: number;
+    formatted_balance_due: string;
+    customer_snapshot?: Record<string, any> | null;
+    notes?: string | null;
+    terms?: string | null;
+    sent_at?: string | null;
+    cancelled_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at?: string | null;
+    customer?: Customer;
+    items?: InvoiceItem[];
+}
+
+export interface InvoiceItemPayload {
+    product_id?: number | null;
+    product_name: string;
+    description?: string | null;
+    quantity: number;
+    unit?: string | null;
+    unit_price: number; // in cents or dollars (normalized)
+    tax_rate?: number;
+}
+
+export interface CreateInvoicePayload {
+    customer_id: number;
+    issue_date: string;
+    due_date: string;
+    currency?: string;
+    discount_type?: DiscountType;
+    discount_value?: number;
+    notes?: string | null;
+    terms?: string | null;
+    items: InvoiceItemPayload[];
+}
+
+export interface UpdateInvoicePayload {
+    customer_id: number;
+    issue_date: string;
+    due_date: string;
+    currency?: string;
+    discount_type?: DiscountType;
+    discount_value?: number;
+    notes?: string | null;
+    terms?: string | null;
+    items: InvoiceItemPayload[];
+}
+
+export interface InvoiceFilterParams {
+    status?: InvoiceStatus | 'all' | 'archived';
+    customer_id?: number | null;
+    search?: string;
+    from_date?: string | null;
+    to_date?: string | null;
+    sort?: string;
+    page?: number;
+    per_page?: number;
+}
+
+
 
 

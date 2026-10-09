@@ -57,6 +57,7 @@ class RoleAndPermissionSeeder extends Seeder
             ['slug' => 'invoices.update', 'name' => 'Update Invoices', 'group' => 'invoices', 'description' => 'Edit drafted invoices.'],
             ['slug' => 'invoices.delete', 'name' => 'Delete Invoices', 'group' => 'invoices', 'description' => 'Delete drafted invoices.'],
             ['slug' => 'invoices.send', 'name' => 'Send Invoices', 'group' => 'invoices', 'description' => 'Send invoices directly to clients.'],
+            ['slug' => 'invoices.cancel', 'name' => 'Cancel Invoices', 'group' => 'invoices', 'description' => 'Cancel drafted or sent invoices.'],
 
             // Payments (Future Catalog)
             ['slug' => 'payments.view', 'name' => 'View Payments', 'group' => 'payments', 'description' => 'View transaction payments.'],
@@ -148,6 +149,7 @@ class RoleAndPermissionSeeder extends Seeder
             'invoices.update',
             'invoices.delete',
             'invoices.send',
+            'invoices.cancel',
             'payments.view',
             'payments.create',
             'expenses.view',
@@ -168,6 +170,7 @@ class RoleAndPermissionSeeder extends Seeder
             'invoices.create',
             'invoices.update',
             'invoices.send',
+            'invoices.cancel',
             'payments.view',
             'payments.create',
             'expenses.view',

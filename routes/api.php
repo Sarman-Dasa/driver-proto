@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Company\CompanyController;
 use App\Http\Controllers\Api\V1\Company\CompanyFeatureController;
 use App\Http\Controllers\Api\V1\Company\CompanyPlanController;
 use App\Http\Controllers\Api\V1\Customer\CustomerController;
+use App\Http\Controllers\Api\V1\Invoice\InvoiceController;
 use App\Http\Controllers\Api\V1\Member\CompanyMemberController;
 use App\Http\Controllers\Api\V1\Plan\PlanController;
 use App\Http\Controllers\Api\V1\Product\ProductController;
@@ -138,6 +139,32 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{company}/products/{product}/restore', [ProductController::class, 'restore'])
                 ->middleware('company.access')
                 ->name('api.v1.companies.products.restore');
+
+            // Phase 7: Invoices
+            Route::get('{company}/invoices', [InvoiceController::class, 'index'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.index');
+            Route::post('{company}/invoices', [InvoiceController::class, 'store'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.store');
+            Route::get('{company}/invoices/{invoice}', [InvoiceController::class, 'show'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.show');
+            Route::put('{company}/invoices/{invoice}', [InvoiceController::class, 'update'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.update');
+            Route::delete('{company}/invoices/{invoice}', [InvoiceController::class, 'destroy'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.destroy');
+            Route::post('{company}/invoices/{invoice}/restore', [InvoiceController::class, 'restore'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.restore');
+            Route::post('{company}/invoices/{invoice}/send', [InvoiceController::class, 'send'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.send');
+            Route::post('{company}/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])
+                ->middleware('company.access')
+                ->name('api.v1.companies.invoices.cancel');
         });
     });
 

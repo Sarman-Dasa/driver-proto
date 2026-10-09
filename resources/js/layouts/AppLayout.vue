@@ -41,6 +41,15 @@
                 ></v-list-item>
 
                 <v-list-item
+                    v-if="companyStore.currentCompany && permissionsStore.can('invoices.view')"
+                    prepend-icon="mdi-file-document-outline"
+                    title="Invoices"
+                    value="invoices"
+                    :to="{ name: 'invoices' }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-domain"
                     title="Workspaces"
                     value="companies"
