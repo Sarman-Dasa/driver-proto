@@ -130,6 +130,57 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     };
 
     /**
+     * Verify a completed Stripe checkout session.
+     */
+    const verifySession = async (
+        sessionId: string,
+        companyId?: number | string
+    ): Promise<SubscriptionSummary | null> => {
+        const targetId = Number(companyId || localStorage.getItem('billflow_current_company_id'));
+        if (!targetId) {
+            throw new Error('No active company selected.');
+        }
+
+        loading.value = true;
+        try {
+            const data = await subscriptionService.verifySession(targetId, sessionId);
+            subscription.value = data.subscription;
+            if (data.subscription?.plan) {
+                currentPlan.value = data.subscription.plan;
+            }
+            hasStripeCustomer.value = data.has_stripe_customer;
+            return data;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    /**
+     * Synchronize subscription status directly from Stripe.
+     */
+    const syncSubscription = async (
+        companyId?: number | string
+    ): Promise<SubscriptionSummary | null> => {
+        const targetId = Number(companyId || localStorage.getItem('billflow_current_company_id'));
+        if (!targetId) {
+            throw new Error('No active company selected.');
+        }
+
+        loading.value = true;
+        try {
+            const data = await subscriptionService.syncSubscription(targetId);
+            subscription.value = data.subscription;
+            if (data.subscription?.plan) {
+                currentPlan.value = data.subscription.plan;
+            }
+            hasStripeCustomer.value = data.has_stripe_customer;
+            return data;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    /**
      * Open Stripe Customer Portal.
      */
     const openPortal = async (companyId?: number | string): Promise<string> => {
@@ -234,6 +285,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
         fetchPlans,
         fetchPlan,
         fetchSubscription,
+        verifySession,
+        syncSubscription,
         checkout,
         openPortal,
         cancel,

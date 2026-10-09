@@ -21,6 +21,16 @@
                     Compare Plans
                 </v-btn>
                 <v-btn
+                    variant="tonal"
+                    color="primary"
+                    prepend-icon="mdi-sync"
+                    class="rounded-lg text-none font-weight-bold ml-2"
+                    :loading="syncLoading"
+                    @click="handleSync"
+                >
+                    Sync Status
+                </v-btn>
+                <v-btn
                     v-if="hasStripeCustomer"
                     color="primary"
                     prepend-icon="mdi-credit-card-outline"
@@ -284,9 +294,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useSubscriptionStore } from '@/stores/subscription';
+import { useCompanyStore } from '@/stores/company';
 
 const subscriptionStore = useSubscriptionStore();
+const companyStore = useCompanyStore();
 
+const syncLoading = ref(false);
 const portalLoading = ref(false);
 const cancelLoading = ref(false);
 const resumeLoading = ref(false);
@@ -364,6 +377,28 @@ const getHistoryStatusColor = (status: string) => {
             return 'info';
         default:
             return 'slate';
+    }
+};
+
+const handleSync = async () => {
+    syncLoading.value = true;
+    try {
+        await subscriptionStore.syncSubscription();
+        await subscriptionStore.fetchPlan();
+        await companyStore.fetchCompanies();
+        snackbar.value = {
+            show: true,
+            text: 'Subscription status successfully synchronized from Stripe.',
+            color: 'success',
+        };
+    } catch (e: any) {
+        snackbar.value = {
+            show: true,
+            text: e.message || 'Failed to sync with Stripe.',
+            color: 'error',
+        };
+    } finally {
+        syncLoading.value = false;
     }
 };
 

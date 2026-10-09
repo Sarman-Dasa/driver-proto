@@ -19,6 +19,9 @@ use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Stripe\Checkout\Session as CheckoutSession;
+use Stripe\Service\Checkout\SessionService;
+use Stripe\Service\SubscriptionService;
+use Stripe\StripeClient;
 use Tests\TestCase;
 
 class StripeSubscriptionTest extends TestCase
@@ -508,5 +511,156 @@ class StripeSubscriptionTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonPath('message', 'You do not have access to this company.');
+    }
+
+    public function test_owner_can_verify_completed_checkout_session_and_activate_subscription(): void
+    {
+        $mockStripeClient = $this->createMock(StripeClient::class);
+        $mockSessions = $this->createMock(SessionService::class);
+        $mockSubs = $this->createMock(SubscriptionService::class);
+
+        $fakeSession = CheckoutSession::constructFrom([
+            'id' => 'cs_test_success_123',
+            'status' => 'complete',
+            'payment_status' => 'paid',
+            'customer' => 'cus_test_cust_123',
+            'metadata' => [
+                'company_id' => (string) $this->company->id,
+                'plan_id' => (string) $this->proPlan->id,
+            ],
+            'subscription' => 'sub_stripe_verified_123',
+        ]);
+
+        $fakeStripeSub = \Stripe\Subscription::constructFrom([
+            'id' => 'sub_stripe_verified_123',
+            'status' => 'active',
+            'created' => time(),
+            'current_period_start' => time(),
+            'current_period_end' => time() + (30 * 86400),
+            'items' => [
+                'data' => [
+                    [
+                        'price' => [
+                            'id' => $this->proPlan->stripe_monthly_price_id,
+                        ],
+                    ],
+                ],
+            ],
+            'metadata' => [
+                'company_id' => (string) $this->company->id,
+                'plan_id' => (string) $this->proPlan->id,
+            ],
+        ]);
+
+        $mockSessions->expects($this->once())
+            ->method('retrieve')
+            ->with('cs_test_success_123', ['expand' => ['subscription']])
+            ->willReturn($fakeSession);
+
+        $mockSubs->expects($this->once())
+            ->method('retrieve')
+            ->with('sub_stripe_verified_123')
+            ->willReturn($fakeStripeSub);
+
+        $mockStripeClient->checkout = new class($mockSessions)
+        {
+            public function __construct(public $sessions) {}
+        };
+        $mockStripeClient->subscriptions = $mockSubs;
+
+        $mockStripeService = $this->createMock(StripeBillingService::class);
+        $mockStripeService->method('getClient')->willReturn($mockStripeClient);
+        $this->app->instance(StripeBillingService::class, $mockStripeService);
+
+        $response = $this->actingAs($this->owner)
+            ->postJson("/api/v1/companies/{$this->company->id}/subscription/verify-session", [
+                'session_id' => 'cs_test_success_123',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.subscription.plan.id', $this->proPlan->id)
+            ->assertJsonPath('data.subscription.status', 'active')
+            ->assertJsonPath('data.subscription.stripe_subscription_id', 'sub_stripe_verified_123');
+
+        $this->assertDatabaseHas('subscriptions', [
+            'company_id' => $this->company->id,
+            'plan_id' => $this->proPlan->id,
+            'stripe_subscription_id' => 'sub_stripe_verified_123',
+            'status' => 'active',
+        ]);
+    }
+
+    public function test_verify_session_rejects_session_belonging_to_another_company(): void
+    {
+        $mockStripeClient = $this->createMock(StripeClient::class);
+        $mockSessions = $this->createMock(SessionService::class);
+
+        $fakeSession = CheckoutSession::constructFrom([
+            'id' => 'cs_test_other_company',
+            'status' => 'complete',
+            'payment_status' => 'paid',
+            'customer' => 'cus_other',
+            'metadata' => [
+                'company_id' => '999999', // Different company
+            ],
+            'subscription' => 'sub_other',
+        ]);
+
+        $mockSessions->expects($this->once())
+            ->method('retrieve')
+            ->willReturn($fakeSession);
+
+        $mockStripeClient->checkout = new class($mockSessions)
+        {
+            public function __construct(public $sessions) {}
+        };
+
+        $mockStripeService = $this->createMock(StripeBillingService::class);
+        $mockStripeService->method('getClient')->willReturn($mockStripeClient);
+        $this->app->instance(StripeBillingService::class, $mockStripeService);
+
+        $response = $this->actingAs($this->owner)
+            ->postJson("/api/v1/companies/{$this->company->id}/subscription/verify-session", [
+                'session_id' => 'cs_test_other_company',
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('message', 'This checkout session does not belong to this workspace.');
+    }
+
+    public function test_verify_session_rejects_unpaid_session(): void
+    {
+        $mockStripeClient = $this->createMock(StripeClient::class);
+        $mockSessions = $this->createMock(SessionService::class);
+
+        $fakeSession = CheckoutSession::constructFrom([
+            'id' => 'cs_test_unpaid',
+            'status' => 'open',
+            'payment_status' => 'unpaid',
+            'metadata' => [
+                'company_id' => (string) $this->company->id,
+            ],
+        ]);
+
+        $mockSessions->expects($this->once())
+            ->method('retrieve')
+            ->willReturn($fakeSession);
+
+        $mockStripeClient->checkout = new class($mockSessions)
+        {
+            public function __construct(public $sessions) {}
+        };
+
+        $mockStripeService = $this->createMock(StripeBillingService::class);
+        $mockStripeService->method('getClient')->willReturn($mockStripeClient);
+        $this->app->instance(StripeBillingService::class, $mockStripeService);
+
+        $response = $this->actingAs($this->owner)
+            ->postJson("/api/v1/companies/{$this->company->id}/subscription/verify-session", [
+                'session_id' => 'cs_test_unpaid',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('message', 'Checkout session is not complete or payment is still pending.');
     }
 }

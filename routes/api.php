@@ -196,6 +196,12 @@ Route::prefix('v1')->group(function (): void {
                 Route::post('resume', [BillingController::class, 'resume'])
                     ->middleware('company.permission:billing.manage')
                     ->name('api.v1.companies.subscription.resume');
+                Route::post('verify-session', [BillingController::class, 'verifySession'])
+                    ->middleware('company.permission:billing.manage')
+                    ->name('api.v1.companies.subscription.verify-session');
+                Route::post('sync', [BillingController::class, 'sync'])
+                    ->middleware('company.permission:billing.manage')
+                    ->name('api.v1.companies.subscription.sync');
                 Route::get('history', [BillingController::class, 'history'])
                     ->middleware('company.permission:billing.view')
                     ->name('api.v1.companies.subscription.history');

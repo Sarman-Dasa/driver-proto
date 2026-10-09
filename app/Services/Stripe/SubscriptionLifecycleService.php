@@ -51,12 +51,45 @@ class SubscriptionLifecycleService
         $companyId = $sessionData['metadata']['company_id'] ?? null;
         $customerId = $sessionData['customer'] ?? null;
 
-        if ($companyId && $customerId) {
+        $company = null;
+        if ($companyId) {
             $company = Company::find($companyId);
-            if ($company && empty($company->stripe_customer_id)) {
-                $company->stripe_customer_id = (string) $customerId;
-                $company->save();
+        }
+
+        if (! $company && $customerId) {
+            $company = Company::where('stripe_customer_id', (string) $customerId)->first();
+        }
+
+        if ($company && $customerId && empty($company->stripe_customer_id)) {
+            $company->stripe_customer_id = (string) $customerId;
+            $company->save();
+        }
+
+        // Verify payment status before activating subscription
+        $paymentStatus = $sessionData['payment_status'] ?? null;
+        if ($paymentStatus !== 'paid' && $paymentStatus !== 'no_payment_required') {
+            Log::info("Checkout session completed but payment_status is '{$paymentStatus}'. Skipping activation.");
+
+            return;
+        }
+
+        // Retrieve and sync subscription state
+        try {
+            $stripeClient = app(StripeBillingService::class)->getClient();
+            $stripeSub = $stripeClient->subscriptions->retrieve((string) $stripeSubscriptionId);
+            if ($stripeSub) {
+                $subData = $stripeSub->toArray();
+                if ($company && ! isset($subData['metadata']['company_id'])) {
+                    $subData['metadata']['company_id'] = (string) $company->id;
+                }
+                if (! empty($sessionData['metadata']['plan_id']) && ! isset($subData['metadata']['plan_id'])) {
+                    $subData['metadata']['plan_id'] = (string) $sessionData['metadata']['plan_id'];
+                }
+
+                $this->handleSubscriptionCreatedOrUpdated($subData, $stripeEventTimestamp);
             }
+        } catch (\Throwable $e) {
+            Log::error("Failed to sync Stripe subscription {$stripeSubscriptionId} in checkout.session.completed: {$e->getMessage()}");
         }
     }
 

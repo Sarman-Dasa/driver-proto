@@ -33,6 +33,27 @@ export const subscriptionService = {
     },
 
     /**
+     * Verify and reconcile a completed Stripe checkout session.
+     */
+    async verifySession(companyId: number, sessionId: string): Promise<SubscriptionSummary> {
+        const response = await apiClient.post<ApiResponse<SubscriptionSummary>>(
+            `/companies/${companyId}/subscription/verify-session`,
+            { session_id: sessionId }
+        );
+        return response.data.data;
+    },
+
+    /**
+     * Reconcile/sync company subscription directly from Stripe.
+     */
+    async syncSubscription(companyId: number): Promise<SubscriptionSummary> {
+        const response = await apiClient.post<ApiResponse<SubscriptionSummary>>(
+            `/companies/${companyId}/subscription/sync`
+        );
+        return response.data.data;
+    },
+
+    /**
      * Create a Stripe Checkout session for subscription upgrade or renewal.
      */
     async createCheckoutSession(

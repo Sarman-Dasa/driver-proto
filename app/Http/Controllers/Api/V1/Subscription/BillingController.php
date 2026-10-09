@@ -12,6 +12,7 @@ use App\Models\Company;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\Stripe\StripeBillingService;
+use App\Services\Stripe\SubscriptionLifecycleService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class BillingController extends Controller
 {
     public function __construct(
         private readonly StripeBillingService $stripeService,
+        private readonly SubscriptionLifecycleService $lifecycleService,
     ) {}
 
     /**
@@ -107,6 +109,137 @@ class BillingController extends Controller
             ]);
         } catch (Throwable $e) {
             return ApiResponse::error('Unable to create billing portal session: '.$e->getMessage(), [], 500);
+        }
+    }
+
+    /**
+     * Verify a completed Stripe checkout session and synchronize the subscription.
+     */
+    public function verifySession(Request $request, Company $company): JsonResponse
+    {
+        $this->authorizeBillingAccess($request, $company, 'billing.manage');
+
+        $validated = $request->validate([
+            'session_id' => ['required', 'string', 'starts_with:cs_'],
+        ]);
+
+        try {
+            $session = $this->stripeService->getClient()->checkout->sessions->retrieve(
+                $validated['session_id'],
+                ['expand' => ['subscription']]
+            );
+
+            // Tenant isolation verification: ensure the session was created for this company
+            $sessionCompanyId = (int) ($session->metadata->company_id ?? $session->client_reference_id ?? 0);
+            if ($sessionCompanyId !== (int) $company->id) {
+                return ApiResponse::error('This checkout session does not belong to this workspace.', [], 403);
+            }
+
+            // Verify payment state
+            if ($session->status !== 'complete' || ($session->payment_status !== 'paid' && $session->payment_status !== 'no_payment_required')) {
+                return ApiResponse::error(
+                    'Checkout session is not complete or payment is still pending.',
+                    [
+                        'status' => $session->status,
+                        'payment_status' => $session->payment_status,
+                    ],
+                    422
+                );
+            }
+
+            // Ensure company has stripe_customer_id recorded
+            if (! empty($session->customer) && empty($company->stripe_customer_id)) {
+                $company->update(['stripe_customer_id' => (string) $session->customer]);
+            }
+
+            // Synchronize the verified subscription
+            $stripeSub = $session->subscription;
+            if (is_string($stripeSub) && ! empty($stripeSub)) {
+                $stripeSub = $this->stripeService->getClient()->subscriptions->retrieve($stripeSub);
+            }
+
+            if ($stripeSub) {
+                $subData = is_array($stripeSub) ? $stripeSub : $stripeSub->toArray();
+                $subData['metadata']['company_id'] = (string) $company->id;
+                if (! empty($session->metadata->plan_id)) {
+                    $subData['metadata']['plan_id'] = (string) $session->metadata->plan_id;
+                }
+
+                $this->lifecycleService->handleSubscriptionCreatedOrUpdated(
+                    $subData,
+                    (int) ($stripeSub->created ?? time())
+                );
+            }
+
+            $subscription = $company->fresh()->currentSubscription();
+            if ($subscription) {
+                $subscription->load('plan.planFeatures.feature');
+            }
+
+            return ApiResponse::success([
+                'subscription' => $subscription ? new SubscriptionResource($subscription) : null,
+                'has_stripe_customer' => ! empty($company->stripe_customer_id),
+                'currency' => $company->currency ?? 'USD',
+            ], 'Subscription verified and synchronized successfully.');
+        } catch (Throwable $e) {
+            return ApiResponse::error('Unable to verify checkout session: '.$e->getMessage(), [], 500);
+        }
+    }
+
+    /**
+     * Reconcile/sync company subscription directly from Stripe.
+     */
+    public function sync(Request $request, Company $company): JsonResponse
+    {
+        $this->authorizeBillingAccess($request, $company, 'billing.manage');
+
+        if (empty($company->stripe_customer_id)) {
+            $subscription = $company->currentSubscription();
+            if ($subscription) {
+                $subscription->load('plan.planFeatures.feature');
+            }
+
+            return ApiResponse::success([
+                'subscription' => $subscription ? new SubscriptionResource($subscription) : null,
+                'has_stripe_customer' => false,
+                'currency' => $company->currency ?? 'USD',
+            ], 'No Stripe customer associated with this workspace.');
+        }
+
+        try {
+            $stripeSubs = $this->stripeService->getClient()->subscriptions->all([
+                'customer' => $company->stripe_customer_id,
+                'status' => 'all',
+                'limit' => 5,
+            ]);
+
+            // Find active or latest subscription
+            $activeSub = null;
+            foreach ($stripeSubs->data as $sub) {
+                if ($sub->status === 'active' || $sub->status === 'trialing') {
+                    $activeSub = $sub;
+                    break;
+                }
+            }
+
+            if ($activeSub) {
+                $subData = $activeSub->toArray();
+                $subData['metadata']['company_id'] = (string) $company->id;
+                $this->lifecycleService->handleSubscriptionCreatedOrUpdated($subData, (int) $activeSub->created);
+            }
+
+            $subscription = $company->fresh()->currentSubscription();
+            if ($subscription) {
+                $subscription->load('plan.planFeatures.feature');
+            }
+
+            return ApiResponse::success([
+                'subscription' => $subscription ? new SubscriptionResource($subscription) : null,
+                'has_stripe_customer' => true,
+                'currency' => $company->currency ?? 'USD',
+            ], 'Subscription synchronized from Stripe.');
+        } catch (Throwable $e) {
+            return ApiResponse::error('Unable to sync with Stripe: '.$e->getMessage(), [], 500);
         }
     }
 

@@ -26,7 +26,7 @@ class StripeWebhookController extends Controller
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
         $secret = (string) config('stripe.webhook_secret', config('services.stripe.webhook_secret'));
-
+        Log::info("call stripe webhook?");
         if (empty($sigHeader) || empty($secret)) {
             Log::warning('Stripe webhook received without signature header or webhook secret configured.');
 
@@ -65,8 +65,12 @@ class StripeWebhookController extends Controller
             'stripe_event_created_at' => Carbon::createFromTimestamp((int) $event->created),
         ]);
 
-        // Dispatch async processing
-        ProcessStripeWebhookJob::dispatch($webhookRecord->id);
+        // Dispatch processing (sync in local if queue is not sync, or queued)
+        if (app()->environment('local') && config('queue.default') !== 'sync') {
+            ProcessStripeWebhookJob::dispatchSync($webhookRecord->id);
+        } else {
+            ProcessStripeWebhookJob::dispatch($webhookRecord->id);
+        }
 
         return response()->json([
             'received' => true,
