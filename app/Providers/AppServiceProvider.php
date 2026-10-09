@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Services\CompanyContext;
+use App\Services\Stripe\StripeConnectService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -19,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(CompanyContext::class, function (): CompanyContext {
             return new CompanyContext;
+        });
+
+        $this->app->singleton(StripeConnectService::class, function (): StripeConnectService {
+            return new StripeConnectService;
         });
     }
 

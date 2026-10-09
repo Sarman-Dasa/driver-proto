@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\Plan\PlanController;
 use App\Http\Controllers\Api\V1\Product\ProductController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Role\RoleController;
+use App\Http\Controllers\Api\V1\StripeConnect\StripeConnectController;
 use App\Http\Controllers\Api\V1\Subscription\BillingController;
 use App\Http\Controllers\Api\V1\Webhook\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -205,6 +206,25 @@ Route::prefix('v1')->group(function (): void {
                 Route::get('history', [BillingController::class, 'history'])
                     ->middleware('company.permission:billing.view')
                     ->name('api.v1.companies.subscription.history');
+            });
+
+            // Phase 10: Stripe Connect Integration
+            Route::prefix('{company}/stripe-connect')->middleware('company.access')->group(function (): void {
+                Route::get('/', [StripeConnectController::class, 'status'])
+                    ->middleware('company.permission:stripe.view')
+                    ->name('api.v1.companies.stripe-connect.status');
+                Route::post('onboard', [StripeConnectController::class, 'onboard'])
+                    ->middleware('company.permission:stripe.manage')
+                    ->name('api.v1.companies.stripe-connect.onboard');
+                Route::post('sync', [StripeConnectController::class, 'sync'])
+                    ->middleware('company.permission:stripe.view')
+                    ->name('api.v1.companies.stripe-connect.sync');
+                Route::post('dashboard-link', [StripeConnectController::class, 'dashboardLink'])
+                    ->middleware('company.permission:stripe.manage')
+                    ->name('api.v1.companies.stripe-connect.dashboard-link');
+                Route::post('disconnect', [StripeConnectController::class, 'disconnect'])
+                    ->middleware('company.permission:stripe.manage')
+                    ->name('api.v1.companies.stripe-connect.disconnect');
             });
         });
     });

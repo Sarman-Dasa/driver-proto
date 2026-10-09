@@ -85,6 +85,15 @@
                 ></v-list-item>
 
                 <v-list-item
+                    v-if="companyStore.currentCompany && (permissionsStore.can('stripe.view') || permissionsStore.isOwner)"
+                    prepend-icon="mdi-credit-card-wireless-outline"
+                    title="Stripe Connect"
+                    value="stripe-connect"
+                    :to="{ name: 'settings.stripe-connect' }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-credit-card-outline"
                     title="Plans & Pricing"
                     value="pricing"

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'name',
@@ -206,5 +207,23 @@ class Company extends Model
     public function getFeatureLimit(string $featureKey): ?int
     {
         return app(FeatureAccessService::class)->getFeatureLimit($this, $featureKey);
+    }
+
+    /**
+     * Stripe Connect account associated with this company.
+     *
+     * @return HasOne<StripeConnectAccount, $this>
+     */
+    public function stripeConnectAccount(): HasOne
+    {
+        return $this->hasOne(StripeConnectAccount::class);
+    }
+
+    /**
+     * Check if this company's connected account is ready to accept customer invoice payments.
+     */
+    public function isStripeConnectReady(): bool
+    {
+        return $this->stripeConnectAccount?->isReadyForPayments() ?? false;
     }
 }

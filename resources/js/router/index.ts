@@ -82,6 +82,12 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
     },
     {
+        path: '/settings/stripe-connect',
+        name: 'settings.stripe-connect',
+        component: () => import('@/pages/settings/StripeConnectSettingsView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
         path: '/subscription/success',
         name: 'subscription.success',
         component: () => import('@/pages/billing/SubscriptionSuccessView.vue'),

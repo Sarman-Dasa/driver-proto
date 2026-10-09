@@ -26,24 +26,37 @@ class StripeWebhookController extends Controller
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
         $secret = (string) config('stripe.webhook_secret', config('services.stripe.webhook_secret'));
-        Log::info("call stripe webhook?");
+        Log::info('call stripe webhook?');
         if (empty($sigHeader) || empty($secret)) {
             Log::warning('Stripe webhook received without signature header or webhook secret configured.');
 
             return response()->json(['error' => 'Webhook secret or signature missing.'], 400);
         }
 
+        $connectSecret = (string) config('stripe.connect_webhook_secret');
+
         try {
             /** @var StripeEvent $event */
             $event = Webhook::constructEvent($payload, $sigHeader, $secret);
+        } catch (SignatureVerificationException $e) {
+            if (! empty($connectSecret) && $connectSecret !== $secret) {
+                try {
+                    /** @var StripeEvent $event */
+                    $event = Webhook::constructEvent($payload, $sigHeader, $connectSecret);
+                } catch (SignatureVerificationException $connectException) {
+                    Log::error('Invalid Stripe webhook signature for both default and connect secrets: '.$connectException->getMessage());
+
+                    return response()->json(['error' => 'Invalid signature.'], 400);
+                }
+            } else {
+                Log::error('Invalid Stripe webhook signature: '.$e->getMessage());
+
+                return response()->json(['error' => 'Invalid signature.'], 400);
+            }
         } catch (UnexpectedValueException $e) {
             Log::error('Invalid Stripe webhook payload: '.$e->getMessage());
 
             return response()->json(['error' => 'Invalid payload.'], 400);
-        } catch (SignatureVerificationException $e) {
-            Log::error('Invalid Stripe webhook signature: '.$e->getMessage());
-
-            return response()->json(['error' => 'Invalid signature.'], 400);
         }
 
         // Idempotency: Ignore already recorded events

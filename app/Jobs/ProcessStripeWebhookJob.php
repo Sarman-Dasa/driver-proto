@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\StripeWebhookEvent;
+use App\Services\Stripe\StripeConnectService;
 use App\Services\Stripe\SubscriptionLifecycleService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -25,8 +26,10 @@ class ProcessStripeWebhookJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(SubscriptionLifecycleService $lifecycleService): void
-    {
+    public function handle(
+        SubscriptionLifecycleService $lifecycleService,
+        StripeConnectService $connectService,
+    ): void {
         /** @var StripeWebhookEvent|null $eventRecord */
         $eventRecord = StripeWebhookEvent::find($this->webhookEventId);
 
@@ -58,6 +61,8 @@ class ProcessStripeWebhookJob implements ShouldQueue
                 'invoice.paid' => $lifecycleService->handleInvoicePaid($dataObject, $eventId, $eventTimestamp),
                 'invoice.payment_failed' => $lifecycleService->handleInvoicePaymentFailed($dataObject, $eventId, $eventTimestamp),
                 'charge.refunded' => $lifecycleService->handleChargeRefunded($dataObject, $eventId, $eventTimestamp),
+                'account.updated' => $connectService->handleAccountUpdated($dataObject),
+                'account.application.deauthorized' => $connectService->handleAccountDeauthorized($dataObject),
                 default => Log::info("Unhandled Stripe webhook event type: {$type}"),
             };
 

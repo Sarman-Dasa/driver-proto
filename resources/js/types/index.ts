@@ -534,3 +534,63 @@ export interface SendInvoiceEmailPayload {
     subject: string;
     message?: string;
 }
+
+// Phase 10: Stripe Connect Integration
+export type StripeConnectStatus =
+    | 'not_connected'
+    | 'pending'
+    | 'restricted'
+    | 'active'
+    | 'disabled';
+
+export interface StripeConnectRequirements {
+    currently_due: string[];
+    past_due: string[];
+    eventually_due: string[];
+    disabled_reason?: string | null;
+}
+
+export interface StripeConnectAccount {
+    id: number;
+    company_id: number;
+    stripe_account_id: string;
+    account_type: string;
+    country: string;
+    currency: string;
+    charges_enabled: boolean;
+    payouts_enabled: boolean;
+    details_submitted: boolean;
+    status: StripeConnectStatus;
+    status_label: string;
+    is_ready_for_payments: boolean;
+    has_pending_requirements: boolean;
+    capabilities: Record<string, string>;
+    requirements: StripeConnectRequirements;
+    connected_at?: string | null;
+    last_synced_at?: string | null;
+}
+
+export interface StripeConnectSummary {
+    is_connected: boolean;
+    status: StripeConnectStatus;
+    status_label: string;
+    is_ready_for_payments: boolean;
+    charges_enabled: boolean;
+    payouts_enabled: boolean;
+    details_submitted: boolean;
+    account_id: string | null;
+    country: string;
+    currency: string;
+    capabilities: Record<string, string>;
+    requirements: StripeConnectRequirements;
+    last_synced_at: string | null;
+}
+
+export interface StripeConnectStatusResponse {
+    summary: StripeConnectSummary;
+    account: StripeConnectAccount | null;
+    is_ready_for_payments: boolean;
+    feature_enabled: boolean;
+    can_manage: boolean;
+}
+
