@@ -166,6 +166,12 @@ const routes: RouteRecordRaw[] = [
         meta: { layout: 'public' },
     },
     {
+        path: '/pay/:token/result',
+        name: 'public.invoice.result',
+        component: () => import('@/pages/public/PublicPaymentResultView.vue'),
+        meta: { layout: 'public' },
+    },
+    {
         path: '/:pathMatch(.*)*',
         redirect: '/dashboard',
     },

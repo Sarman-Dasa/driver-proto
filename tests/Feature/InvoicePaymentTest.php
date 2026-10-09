@@ -282,7 +282,9 @@ class InvoicePaymentTest extends TestCase
                     && str_starts_with((string) ($opts['idempotency_key'] ?? ''), 'cs_PAY-')
                     && $params['mode'] === 'payment'
                     && $params['line_items'][0]['price_data']['unit_amount'] === 25000
-                    && $params['metadata']['type'] === 'invoice_payment';
+                    && $params['metadata']['type'] === 'invoice_payment'
+                    && str_contains($params['success_url'], '/result?session_id={CHECKOUT_SESSION_ID}&status=success')
+                    && str_contains($params['cancel_url'], '/result?session_id={CHECKOUT_SESSION_ID}&status=cancelled');
             })
             ->andReturn($mockSession);
 

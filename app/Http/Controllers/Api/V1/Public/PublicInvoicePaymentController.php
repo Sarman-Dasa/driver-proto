@@ -40,8 +40,8 @@ class PublicInvoicePaymentController extends Controller
         }
 
         $appUrl = rtrim((string) config('app.url', $request->getSchemeAndHttpHost()), '/');
-        $successUrl = "{$appUrl}/pay/{$token}?session_id={CHECKOUT_SESSION_ID}&success=1";
-        $cancelUrl = "{$appUrl}/pay/{$token}?session_id={CHECKOUT_SESSION_ID}&cancelled=1";
+        $successUrl = "{$appUrl}/pay/{$token}/result?session_id={CHECKOUT_SESSION_ID}&status=success";
+        $cancelUrl = "{$appUrl}/pay/{$token}/result?session_id={CHECKOUT_SESSION_ID}&status=cancelled";
 
         $result = $paymentService->createCheckoutSession($invoice, $successUrl, $cancelUrl);
 
