@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\StripeWebhookEvent;
+use App\Services\Payment\InvoicePaymentService;
 use App\Services\Stripe\StripeConnectService;
 use App\Services\Stripe\SubscriptionLifecycleService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,7 +30,9 @@ class ProcessStripeWebhookJob implements ShouldQueue
     public function handle(
         SubscriptionLifecycleService $lifecycleService,
         StripeConnectService $connectService,
+        ?InvoicePaymentService $paymentService = null,
     ): void {
+        $paymentService ??= app(InvoicePaymentService::class);
         /** @var StripeWebhookEvent|null $eventRecord */
         $eventRecord = StripeWebhookEvent::find($this->webhookEventId);
 
@@ -52,9 +55,15 @@ class ProcessStripeWebhookJob implements ShouldQueue
             $dataObject = $payload['data']['object'] ?? [];
             $eventTimestamp = (int) ($payload['created'] ?? time());
             $eventId = $eventRecord->stripe_event_id;
+            $connectedAccountId = $payload['account'] ?? null;
 
             match ($type) {
-                'checkout.session.completed' => $lifecycleService->handleCheckoutSessionCompleted($dataObject, $eventTimestamp),
+                'checkout.session.completed' => (($dataObject['mode'] ?? '') === 'subscription')
+                    ? $lifecycleService->handleCheckoutSessionCompleted($dataObject, $eventTimestamp)
+                    : $paymentService->handleCheckoutSessionCompleted($dataObject, $connectedAccountId),
+                'checkout.session.expired' => $paymentService->handleCheckoutSessionExpired($dataObject, $connectedAccountId),
+                'payment_intent.succeeded' => $paymentService->handlePaymentIntentSucceeded($dataObject, $connectedAccountId),
+                'payment_intent.payment_failed' => $paymentService->handlePaymentIntentFailed($dataObject, $connectedAccountId),
                 'customer.subscription.created',
                 'customer.subscription.updated' => $lifecycleService->handleSubscriptionCreatedOrUpdated($dataObject, $eventTimestamp),
                 'customer.subscription.deleted' => $lifecycleService->handleSubscriptionDeleted($dataObject, $eventTimestamp),

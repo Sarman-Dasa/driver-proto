@@ -49,6 +49,8 @@ class SendInvoiceEmailAction
             ]);
         }
 
+        $invoice->ensurePaymentToken();
+
         $delivery = InvoiceDelivery::create([
             'company_id' => $company->id,
             'invoice_id' => $invoice->id,

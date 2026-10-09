@@ -178,6 +178,16 @@ class Company extends Model
     }
 
     /**
+     * Payments belonging to this company.
+     *
+     * @return HasMany<Payment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->latest();
+    }
+
+    /**
      * Get the current active subscription for this company.
      */
     public function currentSubscription(): ?Subscription

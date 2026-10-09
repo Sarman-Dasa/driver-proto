@@ -458,12 +458,16 @@ export interface Invoice {
     terms?: string | null;
     sent_at?: string | null;
     cancelled_at?: string | null;
+    payment_token?: string | null;
+    payment_url?: string | null;
+    is_payable?: boolean;
     created_at: string;
     updated_at: string;
     deleted_at?: string | null;
     customer?: Customer;
     items?: InvoiceItem[];
     deliveries?: InvoiceDelivery[];
+    payments?: import('./payment').PaymentRecord[];
 }
 
 export interface InvoiceItemPayload {

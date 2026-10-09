@@ -12,9 +12,11 @@ use App\Http\Controllers\Api\V1\Company\CompanyPlanController;
 use App\Http\Controllers\Api\V1\Customer\CustomerController;
 use App\Http\Controllers\Api\V1\Invoice\InvoiceController;
 use App\Http\Controllers\Api\V1\Member\CompanyMemberController;
+use App\Http\Controllers\Api\V1\Payment\PaymentController;
 use App\Http\Controllers\Api\V1\Plan\PlanController;
 use App\Http\Controllers\Api\V1\Product\ProductController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
+use App\Http\Controllers\Api\V1\Public\PublicInvoicePaymentController;
 use App\Http\Controllers\Api\V1\Role\RoleController;
 use App\Http\Controllers\Api\V1\StripeConnect\StripeConnectController;
 use App\Http\Controllers\Api\V1\Subscription\BillingController;
@@ -24,6 +26,19 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function (): void {
     // Phase 9: Stripe Webhooks (unauthenticated, signature-verified)
     Route::post('webhooks/stripe', StripeWebhookController::class)->name('api.v1.webhooks.stripe');
+
+    // Phase 11: Public Customer Invoice Payment Endpoints
+    Route::prefix('public/invoices')->group(function (): void {
+        Route::get('{token}', [PublicInvoicePaymentController::class, 'show'])
+            ->middleware('throttle:60,1')
+            ->name('api.v1.public.invoices.show');
+        Route::post('{token}/checkout', [PublicInvoicePaymentController::class, 'checkout'])
+            ->middleware('throttle:30,1')
+            ->name('api.v1.public.invoices.checkout');
+        Route::get('{token}/payment-status', [PublicInvoicePaymentController::class, 'status'])
+            ->middleware('throttle:60,1')
+            ->name('api.v1.public.invoices.status');
+    });
     // Guest authentication routes with endpoint-specific rate limiters
     Route::prefix('auth')->group(function (): void {
         Route::post('register', [AuthController::class, 'register'])
@@ -226,6 +241,23 @@ Route::prefix('v1')->group(function (): void {
                     ->middleware('company.permission:stripe.manage')
                     ->name('api.v1.companies.stripe-connect.disconnect');
             });
+
+            // Phase 11: Customer Invoice Payments
+            Route::prefix('{company}/payments')->middleware('company.access')->group(function (): void {
+                Route::get('/', [PaymentController::class, 'index'])
+                    ->middleware('company.permission:payments.view')
+                    ->name('api.v1.companies.payments.index');
+                Route::get('{payment}', [PaymentController::class, 'show'])
+                    ->middleware('company.permission:payments.view')
+                    ->name('api.v1.companies.payments.show');
+            });
+
+            Route::get('{company}/invoices/{invoice}/payments', [PaymentController::class, 'invoicePayments'])
+                ->middleware(['company.access', 'company.permission:payments.view'])
+                ->name('api.v1.companies.invoices.payments');
+            Route::post('{company}/invoices/{invoice}/payment-link', [PaymentController::class, 'generatePaymentLink'])
+                ->middleware(['company.access', 'company.permission:invoices.view'])
+                ->name('api.v1.companies.invoices.payment-link');
         });
     });
 

@@ -143,7 +143,7 @@ class InvoiceController extends Controller
 
         $this->authorize('view', [$invoice, $company]);
 
-        $invoice->load(['customer', 'items.product', 'deliveries']);
+        $invoice->load(['customer', 'items.product', 'deliveries', 'payments']);
 
         return ApiResponse::success(
             new InvoiceResource($invoice),

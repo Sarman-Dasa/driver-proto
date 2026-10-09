@@ -152,6 +152,15 @@
                 </tr>
             </table>
 
+            @if(!empty($invoice->payment_token) && $invoice->balance_due > 0)
+                <div style="text-align: center; margin: 28px 0;">
+                    <a href="{{ rtrim(config('app.url'), '/') . '/pay/' . $invoice->payment_token }}"
+                       style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.25);">
+                        Pay Invoice Online &rarr;
+                    </a>
+                </div>
+            @endif
+
             <div class="attachment-note">
                 📎 <span>A PDF copy of this invoice (<strong>Invoice-{{ $invoice->invoice_number }}.pdf</strong>) has been attached to this email.</span>
             </div>

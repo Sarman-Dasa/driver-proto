@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\DiscountType;
 use App\Enums\InvoiceStatus;
+use App\Enums\PaymentStatus;
 use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Invoice extends Model
 {
@@ -48,6 +50,8 @@ class Invoice extends Model
         'updated_by',
         'sent_at',
         'cancelled_at',
+        'payment_token',
+        'payment_token_expires_at',
     ];
 
     /**
@@ -72,6 +76,7 @@ class Invoice extends Model
             'due_date' => 'date:Y-m-d',
             'sent_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'payment_token_expires_at' => 'datetime',
         ];
     }
 
@@ -113,6 +118,16 @@ class Invoice extends Model
     public function deliveries(): HasMany
     {
         return $this->hasMany(InvoiceDelivery::class)->latest();
+    }
+
+    /**
+     * Authoritative payments recorded for this invoice.
+     *
+     * @return HasMany<Payment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->latest();
     }
 
     /**
@@ -291,5 +306,84 @@ class Invoice extends Model
     public function canBeCancelled(): bool
     {
         return $this->status->canBeCancelled();
+    }
+
+    /**
+     * Determine if this invoice can currently accept payments.
+     */
+    public function isPayable(): bool
+    {
+        if (in_array($this->status, [InvoiceStatus::Draft, InvoiceStatus::Cancelled], true)) {
+            return false;
+        }
+
+        return $this->balance_due > 0;
+    }
+
+    /**
+     * Alias for isPayable.
+     */
+    public function canAcceptPayment(): bool
+    {
+        return $this->isPayable();
+    }
+
+    /**
+     * Ensure this invoice has a secure high-entropy payment link token.
+     */
+    public function ensurePaymentToken(bool $force = false): string
+    {
+        if ($force || empty($this->payment_token)) {
+            $this->payment_token = Str::random(64);
+            $this->payment_token_expires_at = now()->addDays(90);
+            $this->save();
+        }
+
+        return $this->payment_token;
+    }
+
+    /**
+     * Amount paid in major currency units.
+     */
+    protected function amountPaidDecimal(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): float => round($this->amount_paid / 100, 2),
+        );
+    }
+
+    /**
+     * Formatted string for amount paid.
+     */
+    protected function formattedAmountPaid(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): string => '$'.number_format($this->amount_paid / 100, 2),
+        );
+    }
+
+    /**
+     * Authoritatively recalculate amounts paid, balance due, and status based on succeeded payment records.
+     */
+    public function recalculateBalance(): void
+    {
+        $totalPaid = (int) $this->payments()
+            ->where('status', PaymentStatus::Succeeded)
+            ->sum('amount');
+
+        $this->amount_paid = $totalPaid;
+        $this->balance_due = max(0, $this->total_amount - $totalPaid);
+
+        if ($this->balance_due === 0 && $this->total_amount > 0) {
+            $this->status = InvoiceStatus::Paid;
+        } elseif ($totalPaid > 0 && $this->balance_due > 0) {
+            $this->status = InvoiceStatus::PartiallyPaid;
+        } elseif ($this->status === InvoiceStatus::Paid || $this->status === InvoiceStatus::PartiallyPaid) {
+            $this->status = ($this->due_date && $this->due_date->isPast())
+                ? InvoiceStatus::Overdue
+                : InvoiceStatus::Sent;
+        }
+
+        $this->save();
     }
 }

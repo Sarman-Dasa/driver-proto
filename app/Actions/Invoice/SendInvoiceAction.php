@@ -27,6 +27,8 @@ class SendInvoiceAction
             ]);
         }
 
+        $invoice->ensurePaymentToken();
+
         $invoice->update([
             'status' => InvoiceStatus::Sent,
             'sent_at' => now(),

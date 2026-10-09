@@ -57,12 +57,16 @@ class InvoiceResource extends JsonResource
             'terms' => $this->terms,
             'sent_at' => $this->sent_at?->toISOString(),
             'cancelled_at' => $this->cancelled_at?->toISOString(),
+            'payment_token' => $this->payment_token,
+            'payment_url' => $this->payment_token ? rtrim((string) config('app.url', $request->getSchemeAndHttpHost()), '/').'/pay/'.$this->payment_token : null,
+            'is_payable' => $this->isPayable(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'deleted_at' => $this->deleted_at?->toISOString(),
             'customer' => $this->whenLoaded('customer', fn () => CustomerResource::make($this->customer)),
             'items' => InvoiceItemResource::collection($this->whenLoaded('items')),
             'deliveries' => InvoiceDeliveryResource::collection($this->whenLoaded('deliveries')),
+            'payments' => PaymentResource::collection($this->whenLoaded('payments')),
         ];
     }
 }

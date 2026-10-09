@@ -38,7 +38,7 @@ apiClient.interceptors.response.use(
 
             // Only redirect if not already on a guest auth page to avoid redirect loops
             const currentPath = window.location.pathname;
-            const guestPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+            const guestPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/pay'];
             const isGuestPath = guestPaths.some((path) => currentPath.startsWith(path));
 
             if (!isGuestPath) {

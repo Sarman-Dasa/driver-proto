@@ -87,6 +87,19 @@
                             Send via Email
                         </v-btn>
 
+                        <!-- Copy Payment Link -->
+                        <v-btn
+                            v-if="invoice.status !== 'draft' && invoice.status !== 'cancelled'"
+                            color="primary"
+                            variant="outlined"
+                            prepend-icon="mdi-link-variant"
+                            class="text-none font-weight-bold rounded-lg"
+                            :loading="copyingLink"
+                            @click="handleCopyPaymentLink"
+                        >
+                            Copy Payment Link
+                        </v-btn>
+
                         <!-- Edit Draft -->
                         <v-btn
                             v-if="invoice.is_editable && permissionsStore.can('invoices.update')"
@@ -380,6 +393,75 @@
                     </v-table>
                 </div>
             </v-card>
+
+            <!-- Customer Payments Section -->
+            <v-card class="rounded-xl border pa-6 mb-6" elevation="0">
+                <div class="d-flex align-center justify-space-between mb-4">
+                    <div class="d-flex align-center gap-2">
+                        <v-icon icon="mdi-cash-multiple" color="primary"></v-icon>
+                        <h2 class="text-h6 font-weight-bold">Customer Payments</h2>
+                    </div>
+                    <v-chip
+                        :color="invoice.balance_due === 0 && invoice.total_amount > 0 ? 'success' : (invoice.amount_paid > 0 ? 'warning' : 'default')"
+                        size="small"
+                        class="font-weight-bold"
+                        variant="tonal"
+                    >
+                        {{ invoice.amount_paid > 0 ? 'Paid: $' + invoice.amount_paid_decimal.toFixed(2) : 'No payments yet' }}
+                    </v-chip>
+                </div>
+
+                <!-- Empty State -->
+                <div
+                    v-if="!invoice.payments || invoice.payments.length === 0"
+                    class="text-center py-6 text-body-2 text-medium-emphasis"
+                >
+                    <v-icon icon="mdi-cash-remove" size="36" class="text-disabled mb-2"></v-icon>
+                    <div>No customer payments recorded for this invoice yet.</div>
+                    <div class="text-caption">Payments completed through Stripe Checkout will be recorded and updated here automatically.</div>
+                </div>
+
+                <!-- Payments List -->
+                <div v-else class="border rounded-lg overflow-hidden">
+                    <v-table density="comfortable">
+                        <thead>
+                            <tr class="bg-surface-variant">
+                                <th class="text-left font-weight-bold">Reference</th>
+                                <th class="text-right font-weight-bold">Amount</th>
+                                <th class="text-center font-weight-bold">Status</th>
+                                <th class="text-left font-weight-bold">Method</th>
+                                <th class="text-right font-weight-bold">Date Paid</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="payment in invoice.payments" :key="payment.id">
+                                <td class="font-mono text-caption font-weight-medium">
+                                    {{ payment.payment_reference }}
+                                </td>
+                                <td class="text-right font-weight-bold">
+                                    {{ payment.formatted_amount }}
+                                </td>
+                                <td class="text-center">
+                                    <v-chip
+                                        :color="payment.status === 'succeeded' ? 'success' : (payment.status === 'pending' ? 'warning' : 'error')"
+                                        size="x-small"
+                                        variant="tonal"
+                                        class="font-weight-bold text-capitalize"
+                                    >
+                                        {{ payment.status_label || payment.status }}
+                                    </v-chip>
+                                </td>
+                                <td class="text-caption text-medium-emphasis">
+                                    {{ payment.payment_method_type || 'card' }}
+                                </td>
+                                <td class="text-right text-caption text-medium-emphasis">
+                                    {{ formatDate(payment.paid_at || payment.created_at) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </v-table>
+                </div>
+            </v-card>
         </div>
 
         <!-- Send via Email Dialog -->
@@ -519,6 +601,7 @@
 import { ref, computed, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useInvoiceStore } from '@/stores/invoices';
+import { usePaymentStore } from '@/stores/payment';
 import { usePermissionsStore } from '@/stores/permissions';
 import { useCompanyStore } from '@/stores/company';
 import type { InvoiceStatus, InvoiceDeliveryStatus, SendInvoiceEmailPayload } from '@/types';
@@ -526,11 +609,13 @@ import type { InvoiceStatus, InvoiceDeliveryStatus, SendInvoiceEmailPayload } fr
 const route = useRoute();
 const router = useRouter();
 const invoiceStore = useInvoiceStore();
+const paymentStore = usePaymentStore();
 const permissionsStore = usePermissionsStore();
 const companyStore = useCompanyStore();
 
 const invoiceId = Number(route.params.invoice);
 const invoice = computed(() => invoiceStore.currentInvoice);
+const copyingLink = ref(false);
 
 const emailDialog = ref(false);
 const cancelDialog = ref(false);
@@ -686,6 +771,24 @@ const confirmDelete = async () => {
         router.push({ name: 'invoices' });
     } finally {
         actionLoading.value = false;
+    }
+};
+
+const handleCopyPaymentLink = async () => {
+    if (!companyStore.currentCompany) return;
+    copyingLink.value = true;
+    try {
+        const linkData = await paymentStore.generatePaymentLink(companyStore.currentCompany.id, invoiceId);
+        await navigator.clipboard.writeText(linkData.payment_url);
+        snackbarColor.value = 'success';
+        snackbarText.value = 'Secure customer payment link copied to clipboard!';
+        snackbar.value = true;
+    } catch (err: any) {
+        snackbarColor.value = 'error';
+        snackbarText.value = err.message || 'Failed to copy payment link.';
+        snackbar.value = true;
+    } finally {
+        copyingLink.value = false;
     }
 };
 

@@ -50,6 +50,15 @@
                 ></v-list-item>
 
                 <v-list-item
+                    v-if="companyStore.currentCompany && (permissionsStore.can('payments.view') || permissionsStore.isOwner)"
+                    prepend-icon="mdi-cash-multiple"
+                    title="Payments"
+                    value="payments"
+                    :to="{ name: 'payments' }"
+                    color="primary"
+                ></v-list-item>
+
+                <v-list-item
                     prepend-icon="mdi-domain"
                     title="Workspaces"
                     value="companies"

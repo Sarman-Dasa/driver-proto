@@ -154,6 +154,18 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
     },
     {
+        path: '/payments',
+        name: 'payments',
+        component: () => import('@/pages/payments/PaymentsView.vue'),
+        meta: { requiresAuth: true, requiresCompany: true, layout: 'app' },
+    },
+    {
+        path: '/pay/:token',
+        name: 'public.invoice.pay',
+        component: () => import('@/pages/public/PublicInvoicePaymentView.vue'),
+        meta: { layout: 'public' },
+    },
+    {
         path: '/:pathMatch(.*)*',
         redirect: '/dashboard',
     },
