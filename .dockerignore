@@ -1,0 +1,54 @@
+# Git & Version Control
+.git/
+.gitignore
+.gitattributes
+
+# Environment & Secret files
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Local development dependencies
+node_modules/
+vendor/
+
+# Storage and runtime files
+storage/app/public/*
+storage/app/private/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*.log
+storage/pail/*
+
+# Built frontend dev artifacts
+public/hot
+public/storage
+
+# Testing & Caches
+tests/
+.phpunit.cache/
+.phpunit.result.cache
+phpunit.xml
+
+# IDE and Editor files
+.idea/
+.vscode/
+.cursor/
+.zed/
+.nova/
+.agent/
+.agents/
+.gemini/
+.gsd/
+*.log
+
+# Documentation and project notes
+docs/
+PROJECT_RULES.md
+GSD-STYLE.md
+CLAUDE.md
+AGENTS.md
+model_capabilities.yaml
+
