@@ -1,10 +1,10 @@
 <template>
-    <v-container class="py-8 px-4 px-md-6" style="max-width: 1100px;">
+    <div class="mx-auto" style="max-width: 1100px;">
         <!-- Page Header -->
         <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-8 gap-4">
             <div>
                 <div class="d-flex align-center gap-2 mb-1">
-                    <h1 class="text-h4 font-weight-bold text-slate-900">
+                    <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">
                         Stripe Connect
                     </h1>
                     <v-chip
@@ -375,7 +375,7 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

@@ -1,9 +1,9 @@
 <template>
-    <div class="payments-view">
+    <div class="payments-view mx-auto" style="max-width: 1320px">
         <!-- Header Section -->
         <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-6 gap-4">
             <div>
-                <h1 class="text-h4 font-weight-bold">Customer Payments</h1>
+                <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900 mb-1">Customer Payments</h1>
                 <p class="text-body-2 text-medium-emphasis">
                     Monitor online customer payments collected through your connected Stripe account.
                 </p>

@@ -1,10 +1,10 @@
 <template>
-    <v-container style="max-width: 720px" class="py-8">
+    <div style="max-width: 720px" class="py-4 mx-auto">
         <div class="text-center mb-8">
-            <v-avatar color="primary" size="56" class="mb-3">
-                <v-icon icon="mdi-office-building-plus" size="32" color="white"></v-icon>
+            <v-avatar color="primary" size="56" class="mb-3 elevation-1" rounded="xl">
+                <v-icon icon="mdi-office-building-plus" size="30" color="white"></v-icon>
             </v-avatar>
-            <h1 class="text-h4 font-weight-bold tracking-tight">Create Workspace</h1>
+            <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">Create Workspace</h1>
             <p class="text-subtitle-1 text-medium-emphasis mt-1">
                 Configure your new company workspace to manage billing and invoices
             </p>
@@ -160,7 +160,7 @@
                 </div>
             </v-form>
         </v-card>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

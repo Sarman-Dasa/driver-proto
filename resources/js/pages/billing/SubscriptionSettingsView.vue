@@ -1,9 +1,9 @@
 <template>
-    <v-container class="py-8 px-4 px-md-6" style="max-width: 1200px;">
+    <div class="mx-auto" style="max-width: 1200px;">
         <!-- Page Header -->
         <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-8 gap-4">
             <div>
-                <h1 class="text-h4 font-weight-bold text-slate-900 mb-1">
+                <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900 mb-1">
                     Subscription & Billing
                 </h1>
                 <p class="text-body-1 text-slate-600 mb-0">
@@ -288,7 +288,7 @@
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">
             {{ snackbar.text }}
         </v-snackbar>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

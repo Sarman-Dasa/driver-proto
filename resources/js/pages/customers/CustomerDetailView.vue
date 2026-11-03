@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid class="pa-6" style="max-width: 1100px">
+    <div class="mx-auto" style="max-width: 1100px">
         <!-- Back Navigation -->
         <div class="mb-4">
             <v-btn
@@ -277,7 +277,7 @@
             :customer="customer"
             @saved="onCustomerUpdated"
         />
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

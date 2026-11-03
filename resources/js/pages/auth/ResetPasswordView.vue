@@ -1,13 +1,15 @@
 <template>
     <div>
-        <h2 class="text-h5 font-weight-bold mb-2">Set new password</h2>
-        <p class="text-body-2 text-medium-emphasis mb-6">Create a strong password for your BillFlow account</p>
+        <div class="mb-6">
+            <h2 class="text-h5 font-weight-bold tracking-tight text-slate-900 mb-1">Set new password</h2>
+            <p class="text-body-2 text-medium-emphasis">Create a strong password for your BillFlow account</p>
+        </div>
 
         <v-alert
             v-if="statusMessage"
             type="success"
             variant="tonal"
-            density="compact"
+            density="comfortable"
             class="mb-4 rounded-lg"
         >
             {{ statusMessage }}
@@ -17,7 +19,7 @@
             v-if="errorMessage"
             type="error"
             variant="tonal"
-            density="compact"
+            density="comfortable"
             class="mb-4 rounded-lg"
             closable
             @click:close="errorMessage = ''"
@@ -26,55 +28,61 @@
         </v-alert>
 
         <v-form @submit.prevent="handleSubmit">
-            <v-text-field
-                v-model="form.email"
-                label="Email Address"
-                type="email"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-email-outline"
-                required
-                class="mb-2"
-            ></v-text-field>
+            <div class="mb-3">
+                <v-text-field
+                    v-model="form.email"
+                    label="Email Address"
+                    type="email"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-email-outline"
+                    required
+                    class="rounded-lg"
+                ></v-text-field>
+            </div>
 
-            <v-text-field
-                v-model="form.password"
-                label="New Password"
-                :type="showPassword ? 'text' : 'password'"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-lock-outline"
-                :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                required
-                class="mb-2"
-                @click:append-inner="showPassword = !showPassword"
-            ></v-text-field>
+            <div class="mb-3">
+                <v-text-field
+                    v-model="form.password"
+                    label="New Password"
+                    :type="showPassword ? 'text' : 'password'"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-lock-outline"
+                    :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                    required
+                    class="rounded-lg"
+                    @click:append-inner="showPassword = !showPassword"
+                ></v-text-field>
+            </div>
 
-            <v-text-field
-                v-model="form.password_confirmation"
-                label="Confirm New Password"
-                :type="showPassword ? 'text' : 'password'"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-lock-check-outline"
-                required
-                class="mb-4"
-            ></v-text-field>
+            <div class="mb-5">
+                <v-text-field
+                    v-model="form.password_confirmation"
+                    label="Confirm New Password"
+                    :type="showPassword ? 'text' : 'password'"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-lock-check-outline"
+                    required
+                    class="rounded-lg"
+                ></v-text-field>
+            </div>
 
             <v-btn
                 type="submit"
                 color="primary"
                 block
                 size="large"
-                elevation="2"
+                elevation="0"
                 :loading="loading"
-                class="text-none font-weight-bold rounded-lg mb-4"
+                class="text-none font-weight-bold rounded-lg mb-5"
             >
                 Reset Password
             </v-btn>
 
             <div class="text-center text-body-2 text-medium-emphasis">
-                <router-link :to="{ name: 'login' }" class="text-primary font-weight-medium text-decoration-none">
+                <router-link :to="{ name: 'login' }" class="text-primary font-weight-semibold text-decoration-none">
                     Back to sign in
                 </router-link>
             </div>

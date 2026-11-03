@@ -1,5 +1,5 @@
 <template>
-    <v-container style="max-width: 800px" class="py-6">
+    <div style="max-width: 860px" class="mx-auto">
         <div class="d-flex align-center justify-space-between mb-6">
             <div class="d-flex align-center gap-3">
                 <v-btn
@@ -9,7 +9,7 @@
                     class="mr-2"
                 ></v-btn>
                 <div>
-                    <h1 class="text-h4 font-weight-bold tracking-tight">Workspace Settings</h1>
+                    <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">Workspace Settings</h1>
                     <p class="text-subtitle-1 text-medium-emphasis mt-1">
                         {{ company?.name || 'Workspace Configuration' }}
                     </p>
@@ -400,7 +400,7 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

@@ -1,15 +1,17 @@
 <template>
     <div>
-        <h2 class="text-h5 font-weight-bold mb-2">Reset password</h2>
-        <p class="text-body-2 text-medium-emphasis mb-6">
-            Enter your account email and we'll send you a password reset link
-        </p>
+        <div class="mb-6">
+            <h2 class="text-h5 font-weight-bold tracking-tight text-slate-900 mb-1">Reset password</h2>
+            <p class="text-body-2 text-medium-emphasis">
+                Enter your account email and we'll send you a password reset link
+            </p>
+        </div>
 
         <v-alert
             v-if="statusMessage"
             type="success"
             variant="tonal"
-            density="compact"
+            density="comfortable"
             class="mb-4 rounded-lg"
         >
             {{ statusMessage }}
@@ -19,7 +21,7 @@
             v-if="errorMessage"
             type="error"
             variant="tonal"
-            density="compact"
+            density="comfortable"
             class="mb-4 rounded-lg"
             closable
             @click:close="errorMessage = ''"
@@ -28,32 +30,34 @@
         </v-alert>
 
         <v-form @submit.prevent="handleSubmit">
-            <v-text-field
-                v-model="email"
-                label="Email Address"
-                type="email"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-email-outline"
-                required
-                class="mb-4"
-            ></v-text-field>
+            <div class="mb-4">
+                <v-text-field
+                    v-model="email"
+                    label="Email Address"
+                    type="email"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-email-outline"
+                    required
+                    class="rounded-lg"
+                ></v-text-field>
+            </div>
 
             <v-btn
                 type="submit"
                 color="primary"
                 block
                 size="large"
-                elevation="2"
+                elevation="0"
                 :loading="loading"
-                class="text-none font-weight-bold rounded-lg mb-4"
+                class="text-none font-weight-bold rounded-lg mb-5"
             >
                 Send Reset Link
             </v-btn>
 
             <div class="text-center text-body-2 text-medium-emphasis">
                 Remember your password?
-                <router-link :to="{ name: 'login' }" class="text-primary font-weight-medium text-decoration-none ml-1">
+                <router-link :to="{ name: 'login' }" class="text-primary font-weight-semibold text-decoration-none ml-1">
                     Sign in
                 </router-link>
             </div>

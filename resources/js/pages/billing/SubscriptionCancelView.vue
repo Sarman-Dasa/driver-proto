@@ -1,5 +1,5 @@
 <template>
-    <v-container class="py-12 px-4" style="max-width: 600px;">
+    <div class="py-8 px-4 mx-auto" style="max-width: 600px;">
         <v-card class="rounded-2xl border pa-8 text-center bg-white elevation-1">
             <div class="d-inline-flex align-center justify-center rounded-circle bg-slate-100 pa-4 mb-5 border border-slate-200">
                 <v-icon icon="mdi-cancel" color="#64748B" size="56"></v-icon>
@@ -32,7 +32,7 @@
                 </v-btn>
             </div>
         </v-card>
-    </v-container>
+    </div>
 </template>
 
 <style scoped>

@@ -1,5 +1,5 @@
 <template>
-    <v-container class="py-8 px-4 px-md-6" style="max-width: 1240px;">
+    <div class="py-4 px-2 px-md-4 mx-auto" style="max-width: 1240px;">
         <!-- Compact & Professional Page Header -->
         <div class="text-center mb-8">
             <v-chip
@@ -217,7 +217,7 @@
                 <span>Enterprise-grade data encryption</span>
             </div>
         </div>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

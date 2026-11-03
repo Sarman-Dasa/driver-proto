@@ -1,5 +1,5 @@
 <template>
-    <v-container class="py-12 px-4" style="max-width: 680px;">
+    <div class="py-8 px-4 mx-auto" style="max-width: 680px;">
         <v-card class="rounded-2xl border pa-8 text-center bg-white elevation-1">
             <!-- Verifying state -->
             <div v-if="verificationState === 'verifying'" class="py-8">
@@ -123,7 +123,7 @@
                 </div>
             </div>
         </v-card>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

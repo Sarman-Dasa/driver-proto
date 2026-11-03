@@ -1,8 +1,8 @@
 <template>
-    <div>
+    <div class="mx-auto" style="max-width: 1200px">
         <!-- Page Header -->
         <div class="mb-8">
-            <h1 class="text-h4 font-weight-bold tracking-tight">Account Settings</h1>
+            <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">Account Settings</h1>
             <p class="text-subtitle-1 text-medium-emphasis mt-1">
                 Manage your personal profile, email address, and security credentials
             </p>

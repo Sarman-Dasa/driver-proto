@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid class="pa-6" style="max-width: 1200px">
+    <div class="mx-auto" style="max-width: 1200px">
         <!-- Header & Breadcrumbs -->
         <div class="mb-6">
             <v-btn
@@ -10,7 +10,7 @@
             >
                 Back to Invoice
             </v-btn>
-            <h1 class="text-h4 font-weight-bold tracking-tight">
+            <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">
                 Edit Invoice {{ invoice?.invoice_number }}
             </h1>
             <p class="text-subtitle-1 text-medium-emphasis">
@@ -40,7 +40,7 @@
             :is-edit="true"
             :initial-invoice="invoice"
         />
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

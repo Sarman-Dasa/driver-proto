@@ -1,10 +1,10 @@
 <template>
-    <v-container fluid class="pa-6" style="max-width: 1200px">
+    <div class="mx-auto" style="max-width: 1320px">
         <!-- Page Header -->
         <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between mb-6 gap-4">
             <div>
                 <div class="d-flex align-center gap-2 mb-1">
-                    <h1 class="text-h4 font-weight-bold tracking-tight">Invoices</h1>
+                    <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">Invoices</h1>
                     <v-chip
                         v-if="invoiceStore.pagination"
                         size="small"
@@ -16,7 +16,7 @@
                     </v-chip>
                 </div>
                 <p class="text-subtitle-1 text-medium-emphasis">
-                    Create, manage, and track client billing, draft line items, and payment schedules
+                    Create, manage, and track client billing, line items, and payment schedules
                 </p>
             </div>
 
@@ -514,7 +514,7 @@
         <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="4000" location="bottom end">
             {{ snackbarText }}
         </v-snackbar>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

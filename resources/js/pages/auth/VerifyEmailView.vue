@@ -1,10 +1,10 @@
 <template>
     <div class="text-center">
-        <div class="d-inline-flex pa-4 rounded-circle bg-primary-lighten-4 mb-4">
-            <v-icon icon="mdi-email-check-outline" size="48" color="primary"></v-icon>
+        <div class="d-inline-flex pa-4 rounded-xl bg-indigo-50 border border-indigo-100 mb-4">
+            <v-icon icon="mdi-email-check-outline" size="44" color="primary"></v-icon>
         </div>
 
-        <h2 class="text-h5 font-weight-bold mb-2">Verify your email address</h2>
+        <h2 class="text-h5 font-weight-bold tracking-tight text-slate-900 mb-2">Verify your email address</h2>
         <p class="text-body-2 text-medium-emphasis mb-6">
             We've sent a verification link to
             <span class="font-weight-bold text-slate-900">{{ authStore.user?.email }}</span>.
@@ -15,7 +15,7 @@
             v-if="statusMessage"
             type="success"
             variant="tonal"
-            density="compact"
+            density="comfortable"
             class="mb-4 text-start rounded-lg"
         >
             {{ statusMessage }}
@@ -25,7 +25,7 @@
             v-if="errorMessage"
             type="error"
             variant="tonal"
-            density="compact"
+            density="comfortable"
             class="mb-4 text-start rounded-lg"
         >
             {{ errorMessage }}
@@ -35,7 +35,7 @@
             color="primary"
             block
             size="large"
-            elevation="2"
+            elevation="0"
             :loading="loading"
             class="text-none font-weight-bold rounded-lg mb-3"
             @click="handleResend"
@@ -46,10 +46,10 @@
         <v-btn
             variant="text"
             block
-            class="text-none font-weight-medium rounded-lg"
+            class="text-none font-weight-medium rounded-lg text-medium-emphasis"
             @click="handleLogout"
         >
-            Log out
+            Sign out
         </v-btn>
     </div>
 </template>

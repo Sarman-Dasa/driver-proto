@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid class="pa-6" style="max-width: 1100px">
+    <div class="mx-auto" style="max-width: 1100px">
         <!-- Back Navigation -->
         <div class="mb-4">
             <v-btn
@@ -594,7 +594,7 @@
         <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="4000" location="bottom end">
             {{ snackbarText }}
         </v-snackbar>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

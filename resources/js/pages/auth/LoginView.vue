@@ -1,13 +1,15 @@
 <template>
     <div>
-        <h2 class="text-h5 font-weight-bold mb-2">Welcome back</h2>
-        <p class="text-body-2 text-medium-emphasis mb-6">Enter your credentials to access your account</p>
+        <div class="mb-6">
+            <h2 class="text-h5 font-weight-bold tracking-tight text-slate-900 mb-1">Welcome back</h2>
+            <p class="text-body-2 text-medium-emphasis">Enter your credentials to access your workspace</p>
+        </div>
 
         <v-alert
             v-if="errorMessage"
             type="error"
             variant="tonal"
-            density="compact"
+            density="comfortable"
             class="mb-4 rounded-lg"
             closable
             @click:close="errorMessage = ''"
@@ -16,34 +18,38 @@
         </v-alert>
 
         <v-form @submit.prevent="handleSubmit">
-            <v-text-field
-                v-model="form.email"
-                label="Email Address"
-                type="email"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-email-outline"
-                :error-messages="errors.email"
-                required
-                class="mb-2"
-            ></v-text-field>
+            <div class="mb-3">
+                <v-text-field
+                    v-model="form.email"
+                    label="Email Address"
+                    type="email"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-email-outline"
+                    :error-messages="errors.email"
+                    required
+                    class="rounded-lg"
+                ></v-text-field>
+            </div>
 
-            <v-text-field
-                v-model="form.password"
-                label="Password"
-                :type="showPassword ? 'text' : 'password'"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-lock-outline"
-                :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                :error-messages="errors.password"
-                required
-                class="mb-1"
-                @click:append-inner="showPassword = !showPassword"
-            ></v-text-field>
+            <div class="mb-1">
+                <v-text-field
+                    v-model="form.password"
+                    label="Password"
+                    :type="showPassword ? 'text' : 'password'"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-lock-outline"
+                    :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                    :error-messages="errors.password"
+                    required
+                    class="rounded-lg"
+                    @click:append-inner="showPassword = !showPassword"
+                ></v-text-field>
+            </div>
 
-            <div class="d-flex justify-end mb-4">
-                <router-link :to="{ name: 'forgot-password' }" class="text-caption text-primary text-decoration-none">
+            <div class="d-flex justify-end mb-5">
+                <router-link :to="{ name: 'forgot-password' }" class="text-caption font-weight-medium text-primary text-decoration-none">
                     Forgot password?
                 </router-link>
             </div>
@@ -53,17 +59,17 @@
                 color="primary"
                 block
                 size="large"
-                elevation="2"
+                elevation="0"
                 :loading="loading"
-                class="text-none font-weight-bold rounded-lg mb-4"
+                class="text-none font-weight-bold rounded-lg mb-5"
             >
                 Sign In
             </v-btn>
 
             <div class="text-center text-body-2 text-medium-emphasis">
                 Don't have an account?
-                <router-link :to="{ name: 'register' }" class="text-primary font-weight-medium text-decoration-none ml-1">
-                    Sign up
+                <router-link :to="{ name: 'register' }" class="text-primary font-weight-semibold text-decoration-none ml-1">
+                    Create account
                 </router-link>
             </div>
         </v-form>

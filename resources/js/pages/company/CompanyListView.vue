@@ -1,8 +1,8 @@
 <template>
-    <v-container style="max-width: 960px" class="py-6">
+    <div style="max-width: 1040px" class="mx-auto">
         <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between mb-6 gap-4">
             <div>
-                <h1 class="text-h4 font-weight-bold tracking-tight">Workspaces</h1>
+                <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">Workspaces</h1>
                 <p class="text-subtitle-1 text-medium-emphasis mt-1">
                     Manage your active company workspaces and switch between business contexts
                 </p>
@@ -168,7 +168,7 @@
                 Create Workspace
             </v-btn>
         </v-card>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">

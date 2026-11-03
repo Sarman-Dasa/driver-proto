@@ -1,10 +1,10 @@
 <template>
-    <v-container fluid class="pa-6" style="max-width: 1200px">
+    <div class="mx-auto" style="max-width: 1320px">
         <!-- Page Header -->
         <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between mb-6 gap-4">
             <div>
                 <div class="d-flex align-center gap-2 mb-1">
-                    <h1 class="text-h4 font-weight-bold tracking-tight">Customers</h1>
+                    <h1 class="text-h4 font-weight-bold tracking-tight text-slate-900">Customers</h1>
                     <v-chip
                         v-if="customerStore.pagination"
                         size="small"
@@ -429,7 +429,7 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-    </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">
