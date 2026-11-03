@@ -26,6 +26,33 @@ class PublicInvoicePaymentController extends Controller
     }
 
     /**
+     * Create a Stripe PaymentIntent for inline custom Stripe Elements payment.
+     */
+    public function paymentIntent(Request $request, string $token, InvoicePaymentService $paymentService): JsonResponse
+    {
+        /** @var Invoice|null $invoice */
+        $invoice = Invoice::where('payment_token', $token)->first();
+
+        if (! $invoice) {
+            throw ValidationException::withMessages([
+                'token' => ['Invalid or non-existent invoice payment link.'],
+            ]);
+        }
+
+        $result = $paymentService->createPaymentIntent($invoice);
+
+        return response()->json([
+            'data' => [
+                'client_secret' => $result['client_secret'],
+                'payment_intent_id' => $result['payment_intent_id'],
+                'payment_reference' => $result['payment_reference'],
+                'publishable_key' => $result['publishable_key'],
+                'stripe_account_id' => $result['stripe_account_id'],
+            ],
+        ]);
+    }
+
+    /**
      * Create a Stripe Checkout Session for the invoice routed to the company's connected account.
      */
     public function checkout(Request $request, string $token, InvoicePaymentService $paymentService): JsonResponse
@@ -60,8 +87,9 @@ class PublicInvoicePaymentController extends Controller
     public function status(Request $request, string $token, InvoicePaymentService $paymentService): JsonResponse
     {
         $sessionId = (string) $request->query('session_id', '');
+        $paymentIntentId = (string) ($request->query('payment_intent_id') ?: $request->query('payment_intent') ?: '');
 
-        $data = $paymentService->getPaymentStatus($token, $sessionId ?: null);
+        $data = $paymentService->getPaymentStatus($token, $sessionId ?: null, $paymentIntentId ?: null);
 
         return response()->json([
             'data' => $data,

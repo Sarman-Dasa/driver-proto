@@ -201,28 +201,85 @@
                             </div>
                         </div>
 
-                        <!-- Primary Pay Action Button -->
+                        <!-- In-Application Stripe Elements Payment Form -->
                         <div v-if="invoice.is_payable && invoice.balance_due > 0" class="mt-4">
-                            <v-btn
-                                color="primary"
-                                block
-                                size="x-large"
-                                class="text-none font-weight-bold rounded-xl mb-3 pay-btn elevation-2"
-                                prepend-icon="mdi-credit-card-fast-outline"
-                                :loading="checkoutLoading"
-                                @click="handleInitiatePayment"
-                            >
-                                Pay Invoice Securely
-                            </v-btn>
-
-                            <!-- Stripe Security Processing Note -->
-                            <div class="stripe-trust-note pa-3 rounded-lg bg-surface-variant text-caption text-medium-emphasis">
-                                <div class="d-flex align-center gap-1 font-weight-medium text-slate-800 mb-1">
-                                    <v-icon icon="mdi-lock-check" size="14" color="success" class="mr-1"></v-icon>
-                                    <span>Direct &amp; Encrypted via Stripe</span>
+                            <div class="custom-payment-form">
+                                <div class="d-flex align-center justify-space-between mb-3">
+                                    <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis tracking-wider">
+                                        Card &amp; Payment Details
+                                    </span>
+                                    <v-icon icon="mdi-credit-card-outline" size="18" color="primary"></v-icon>
                                 </div>
-                                <div class="lh-sm">
-                                    Payments are processed directly by Stripe on behalf of <strong>{{ invoice.company.name }}</strong>. Your credit card information is never stored or handled by BillFlow.
+
+                                <!-- Elements Loading Skeleton -->
+                                <div v-if="elementsLoading" class="elements-loading-box pa-6 rounded-xl border text-center mb-4">
+                                    <v-progress-circular indeterminate color="primary" size="36" width="3" class="mb-3"></v-progress-circular>
+                                    <div class="text-caption text-medium-emphasis">Initializing secure payment elements...</div>
+                                </div>
+
+                                <!-- Stripe Elements Mount Target Container -->
+                                <div v-show="!elementsLoading && !elementsError" class="stripe-elements-wrapper mb-4">
+                                    <div id="payment-element" class="stripe-element-mount rounded-xl"></div>
+                                </div>
+
+                                <!-- Elements Init Error Alert -->
+                                <v-alert
+                                    v-if="elementsError"
+                                    type="error"
+                                    variant="tonal"
+                                    density="comfortable"
+                                    class="rounded-xl mb-4 text-body-2"
+                                >
+                                    {{ elementsError }}
+                                    <template #append>
+                                        <v-btn
+                                            size="x-small"
+                                            variant="flat"
+                                            color="error"
+                                            class="text-none"
+                                            @click="initializePaymentIntentAndElements"
+                                        >
+                                            Retry
+                                        </v-btn>
+                                    </template>
+                                </v-alert>
+
+                                <!-- Validation / Card Error Message -->
+                                <v-alert
+                                    v-if="cardErrorMessage"
+                                    type="error"
+                                    variant="tonal"
+                                    density="comfortable"
+                                    class="rounded-xl mb-4 text-body-2"
+                                    closable
+                                    @click:close="cardErrorMessage = ''"
+                                >
+                                    {{ cardErrorMessage }}
+                                </v-alert>
+
+                                <!-- Custom Pay Button -->
+                                <v-btn
+                                    color="primary"
+                                    block
+                                    size="x-large"
+                                    class="text-none font-weight-bold rounded-xl mb-3 pay-btn elevation-2"
+                                    prepend-icon="mdi-lock"
+                                    :loading="submittingPayment || elementsLoading"
+                                    :disabled="!elementsReady || submittingPayment || elementsLoading"
+                                    @click="handleSubmitPayment"
+                                >
+                                    Pay ${{ invoice.balance_due_decimal.toFixed(2) }} {{ invoice.currency }}
+                                </v-btn>
+
+                                <!-- Stripe Trust & Encryption Note -->
+                                <div class="stripe-trust-note pa-3 rounded-lg bg-surface-variant text-caption text-medium-emphasis">
+                                    <div class="d-flex align-center gap-1 font-weight-medium text-slate-800 mb-1">
+                                        <v-icon icon="mdi-shield-check" size="14" color="success" class="mr-1"></v-icon>
+                                        <span>256-Bit SSL Encrypted Payment</span>
+                                    </div>
+                                    <div class="lh-sm">
+                                        Card details are securely processed directly by Stripe on behalf of <strong>{{ invoice.company.name }}</strong>. Your sensitive payment data is never stored on our servers.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -278,8 +335,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { loadStripe, type Stripe, type StripeElements, type StripePaymentElement } from '@stripe/stripe-js';
 import { usePaymentStore } from '@/stores/payment';
 import type { PublicInvoiceData } from '@/types/payment';
 
@@ -290,13 +348,23 @@ const paymentStore = usePaymentStore();
 const token = computed(() => (route.params.token as string) || '');
 
 const loading = ref(true);
-const checkoutLoading = ref(false);
 const errorState = ref(false);
 const errorTitle = ref('');
 const errorMessage = ref('');
 const canRetry = ref(true);
 
 const invoice = ref<PublicInvoiceData | null>(null);
+
+// Stripe Elements custom state
+let stripe: Stripe | null = null;
+let elements: StripeElements | null = null;
+let paymentElement: StripePaymentElement | null = null;
+
+const elementsLoading = ref(false);
+const elementsReady = ref(false);
+const elementsError = ref<string | null>(null);
+const cardErrorMessage = ref<string | null>(null);
+const submittingPayment = ref(false);
 
 const getStatusColor = (status: string): string => {
     switch (status) {
@@ -340,27 +408,130 @@ const loadInvoiceData = async () => {
     }
 };
 
-const handleInitiatePayment = async () => {
-    if (!token.value || checkoutLoading.value) return;
+const initializePaymentIntentAndElements = async () => {
+    if (!token.value || !invoice.value || !invoice.value.is_payable || invoice.value.balance_due <= 0) {
+        return;
+    }
 
-    checkoutLoading.value = true;
+    elementsLoading.value = true;
+    elementsReady.value = false;
+    elementsError.value = null;
+    cardErrorMessage.value = '';
+
     try {
-        const result = await paymentStore.createCheckoutSession(token.value);
-        if (result?.checkout_url) {
-            window.location.href = result.checkout_url;
-        } else {
-            throw new Error('No checkout URL returned from payment server.');
+        const intentData = await paymentStore.createPaymentIntent(token.value);
+        const publishableKey = intentData.publishable_key || invoice.value.stripe_publishable_key;
+        const stripeAccountId = intentData.stripe_account_id || invoice.value.stripe_account_id;
+
+        if (!publishableKey) {
+            throw new Error('Stripe publishable key is not configured.');
         }
+
+        stripe = await loadStripe(
+            publishableKey,
+            stripeAccountId ? { stripeAccount: stripeAccountId } : undefined
+        );
+
+        if (!stripe) {
+            throw new Error('Failed to load Stripe SDK.');
+        }
+
+        elements = stripe.elements({
+            clientSecret: intentData.client_secret,
+            appearance: {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#4f46e5',
+                    colorBackground: '#ffffff',
+                    colorText: '#1e293b',
+                    colorDanger: '#ef4444',
+                    fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+                    borderRadius: '8px',
+                    spacingUnit: '4px',
+                },
+            },
+        });
+
+        paymentElement = elements.create('payment', {
+            layout: 'tabs',
+        });
+
+        paymentElement.on('ready', () => {
+            elementsLoading.value = false;
+            elementsReady.value = true;
+        });
+
+        paymentElement.on('change', (event: any) => {
+            if (event.error) {
+                cardErrorMessage.value = event.error.message;
+            } else {
+                cardErrorMessage.value = '';
+            }
+        });
+
+        await nextTick();
+        paymentElement.mount('#payment-element');
     } catch (err: any) {
-        alert(err.message || 'Failed to initialize payment session. Please try again.');
-        checkoutLoading.value = false;
+        elementsLoading.value = false;
+        elementsError.value = err.message || 'Unable to initialize secure payment fields.';
     }
 };
 
-onMounted(() => {
-    // If arriving with Stripe session_id, success, or cancelled return parameters,
-    // forward directly to the dedicated PublicPaymentResultView page!
-    if (route.query.session_id || route.query.status || route.query.success === '1' || route.query.cancelled === '1') {
+const handleSubmitPayment = async () => {
+    if (!stripe || !elements || submittingPayment.value) return;
+
+    submittingPayment.value = true;
+    cardErrorMessage.value = '';
+
+    const returnUrl = `${window.location.origin}/pay/${token.value}/result`;
+
+    try {
+        const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                return_url: returnUrl,
+                receipt_email: invoice.value?.customer?.email || undefined,
+            },
+            redirect: 'if_required',
+        });
+
+        if (error) {
+            if (error.type === 'card_error' || error.type === 'validation_error') {
+                cardErrorMessage.value = error.message || 'Payment details could not be validated.';
+            } else {
+                cardErrorMessage.value = error.message || 'An unexpected error occurred during payment processing.';
+            }
+            submittingPayment.value = false;
+            return;
+        }
+
+        if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+            router.push({
+                name: 'public.invoice.result',
+                params: { token: token.value },
+                query: {
+                    payment_intent: paymentIntent.id,
+                    payment_intent_client_secret: paymentIntent.client_secret,
+                    redirect_status: paymentIntent.status,
+                },
+            });
+        }
+    } catch (err: any) {
+        cardErrorMessage.value = err.message || 'Payment confirmation failed.';
+        submittingPayment.value = false;
+    }
+};
+
+onMounted(async () => {
+    // If arriving with Stripe session_id, payment_intent, or redirect status, forward to result view
+    if (
+        route.query.payment_intent ||
+        route.query.session_id ||
+        route.query.redirect_status ||
+        route.query.status ||
+        route.query.success === '1' ||
+        route.query.cancelled === '1'
+    ) {
         router.replace({
             name: 'public.invoice.result',
             params: { token: token.value },
@@ -369,7 +540,17 @@ onMounted(() => {
         return;
     }
 
-    loadInvoiceData();
+    await loadInvoiceData();
+
+    if (invoice.value?.is_payable && invoice.value.balance_due > 0) {
+        await initializePaymentIntentAndElements();
+    }
+});
+
+onUnmounted(() => {
+    if (paymentElement) {
+        paymentElement.destroy();
+    }
 });
 </script>
 
@@ -405,6 +586,15 @@ onMounted(() => {
 
 .pay-btn {
     letter-spacing: 0.3px;
+}
+
+.stripe-elements-wrapper {
+    min-height: 120px;
+}
+
+.elements-loading-box {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
 }
 
 .stripe-trust-note {

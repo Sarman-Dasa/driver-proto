@@ -32,6 +32,9 @@ Route::prefix('v1')->group(function (): void {
         Route::get('{token}', [PublicInvoicePaymentController::class, 'show'])
             ->middleware('throttle:60,1')
             ->name('api.v1.public.invoices.show');
+        Route::post('{token}/payment-intent', [PublicInvoicePaymentController::class, 'paymentIntent'])
+            ->middleware('throttle:30,1')
+            ->name('api.v1.public.invoices.payment-intent');
         Route::post('{token}/checkout', [PublicInvoicePaymentController::class, 'checkout'])
             ->middleware('throttle:30,1')
             ->name('api.v1.public.invoices.checkout');

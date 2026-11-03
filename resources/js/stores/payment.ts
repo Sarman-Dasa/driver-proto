@@ -96,6 +96,23 @@ export const usePaymentStore = defineStore('payment', () => {
     }
 
     /**
+     * Public flow: Create a Stripe PaymentIntent for inline custom Stripe Elements payment.
+     */
+    async function createPaymentIntent(token: string) {
+        checkoutLoading.value = true;
+        error.value = null;
+        try {
+            const response = await apiClient.post(`/public/invoices/${token}/payment-intent`);
+            return response.data.data;
+        } catch (err: any) {
+            error.value = err.message || 'Failed to initiate payment.';
+            throw err;
+        } finally {
+            checkoutLoading.value = false;
+        }
+    }
+
+    /**
      * Public flow: Create a Stripe Checkout session.
      */
     async function createCheckoutSession(token: string) {
@@ -113,15 +130,21 @@ export const usePaymentStore = defineStore('payment', () => {
     }
 
     /**
-     * Public flow: Verify payment status by token and optional session ID.
+     * Public flow: Verify payment status by token and optional session ID or payment intent ID.
      */
-    async function fetchPublicPaymentStatus(token: string, sessionId?: string) {
+    async function fetchPublicPaymentStatus(token: string, identifier?: string) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await apiClient.get(`/public/invoices/${token}/payment-status`, {
-                params: sessionId ? { session_id: sessionId } : {},
-            });
+            const params: Record<string, string> = {};
+            if (identifier) {
+                if (identifier.startsWith('cs_')) {
+                    params.session_id = identifier;
+                } else {
+                    params.payment_intent_id = identifier;
+                }
+            }
+            const response = await apiClient.get(`/public/invoices/${token}/payment-status`, { params });
             publicPaymentStatus.value = response.data.data;
             return response.data.data;
         } catch (err: any) {
@@ -147,6 +170,7 @@ export const usePaymentStore = defineStore('payment', () => {
         fetchPayment,
         generatePaymentLink,
         fetchPublicInvoice,
+        createPaymentIntent,
         createCheckoutSession,
         fetchPublicPaymentStatus,
     };

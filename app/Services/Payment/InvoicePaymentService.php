@@ -133,6 +133,8 @@ class InvoicePaymentService
             'notes' => $invoice->notes,
             'terms' => $invoice->terms,
             'stripe_connect_ready' => $isConnectReady,
+            'stripe_publishable_key' => (string) config('stripe.key'),
+            'stripe_account_id' => $connectAccount?->stripe_account_id,
             'company' => [
                 'name' => $company->name,
                 'email' => $company->email,
@@ -145,6 +147,128 @@ class InvoicePaymentService
                 'company_name' => $snapshot['company_name'] ?? $invoice->customer?->company_name ?? null,
             ],
             'items' => $items,
+        ];
+    }
+
+    /**
+     * Create a Stripe PaymentIntent for custom in-application Stripe Elements payment routed to the connected account.
+     *
+     * @return array{
+     *     client_secret: string,
+     *     payment_intent_id: string,
+     *     payment_reference: string,
+     *     stripe_account_id: string,
+     *     publishable_key: string,
+     * }
+     */
+    public function createPaymentIntent(Invoice $invoice): array
+    {
+        // 1. Validate invoice eligibility
+        if ($invoice->status === InvoiceStatus::Draft) {
+            throw ValidationException::withMessages([
+                'invoice' => ['Draft invoices cannot be paid. The invoice must be sent first.'],
+            ]);
+        }
+
+        if ($invoice->status === InvoiceStatus::Cancelled) {
+            throw ValidationException::withMessages([
+                'invoice' => ['Cancelled invoices cannot be paid.'],
+            ]);
+        }
+
+        if ($invoice->balance_due <= 0) {
+            throw ValidationException::withMessages([
+                'invoice' => ['This invoice has already been fully paid.'],
+            ]);
+        }
+
+        if ($invoice->payment_token_expires_at !== null && $invoice->payment_token_expires_at->isPast()) {
+            throw ValidationException::withMessages([
+                'token' => ['This invoice payment link has expired.'],
+            ]);
+        }
+
+        // 2. Validate company Stripe Connect account readiness
+        $company = $invoice->company;
+        $connectAccount = $company->stripeConnectAccount;
+
+        if (! $connectAccount || ! $connectAccount->isReadyForPayments()) {
+            throw ValidationException::withMessages([
+                'stripe_connect' => ['This company is currently unable to accept online card payments via Stripe.'],
+            ]);
+        }
+
+        $connectedAccountId = $connectAccount->stripe_account_id;
+        $customerEmail = $invoice->customer_snapshot['email'] ?? $invoice->customer?->email ?? null;
+
+        // 3. Generate unique internal payment reference
+        $paymentReference = 'PAY-'.strtoupper(Str::random(16));
+
+        // 4. Build Stripe PaymentIntent parameters
+        $intentParams = [
+            'amount' => $invoice->balance_due,
+            'currency' => strtolower($invoice->currency),
+            'automatic_payment_methods' => [
+                'enabled' => true,
+            ],
+            'description' => "Payment for Invoice #{$invoice->invoice_number}",
+            'metadata' => [
+                'type' => 'invoice_payment',
+                'company_id' => (string) $company->id,
+                'invoice_id' => (string) $invoice->id,
+                'customer_id' => (string) ($invoice->customer_id ?? ''),
+                'payment_reference' => $paymentReference,
+                'platform' => 'BillFlow',
+            ],
+        ];
+
+        if ($customerEmail) {
+            $intentParams['receipt_email'] = $customerEmail;
+        }
+
+        try {
+            $paymentIntent = $this->getClient()->paymentIntents->create(
+                $intentParams,
+                [
+                    'stripe_account' => $connectedAccountId,
+                    'idempotency_key' => 'pi_'.$paymentReference,
+                ]
+            );
+        } catch (Throwable $e) {
+            Log::error("Failed to create Stripe PaymentIntent for Invoice {$invoice->id}: {$e->getMessage()}", [
+                'invoice_id' => $invoice->id,
+                'company_id' => $company->id,
+                'connected_account' => $connectedAccountId,
+            ]);
+
+            throw ValidationException::withMessages([
+                'stripe' => ['Unable to initiate payment with Stripe: '.$e->getMessage()],
+            ]);
+        }
+
+        // 5. Record local pending Payment record
+        Payment::create([
+            'company_id' => $company->id,
+            'invoice_id' => $invoice->id,
+            'customer_id' => $invoice->customer_id,
+            'payment_reference' => $paymentReference,
+            'stripe_payment_intent_id' => $paymentIntent->id,
+            'stripe_account_id' => $connectedAccountId,
+            'amount' => $invoice->balance_due,
+            'currency' => strtoupper($invoice->currency),
+            'status' => PaymentStatus::Pending,
+            'metadata' => [
+                'client_secret' => $paymentIntent->client_secret,
+                'intent_created' => $paymentIntent->created ?? time(),
+            ],
+        ]);
+
+        return [
+            'client_secret' => (string) $paymentIntent->client_secret,
+            'payment_intent_id' => (string) $paymentIntent->id,
+            'payment_reference' => $paymentReference,
+            'stripe_account_id' => $connectedAccountId,
+            'publishable_key' => (string) config('stripe.key'),
         ];
     }
 
@@ -294,7 +418,7 @@ class InvoicePaymentService
      *
      * @return array<string, mixed>
      */
-    public function getPaymentStatus(string $token, ?string $sessionId = null): array
+    public function getPaymentStatus(string $token, ?string $sessionId = null, ?string $paymentIntentId = null): array
     {
         /** @var Invoice|null $invoice */
         $invoice = Invoice::with(['company.stripeConnectAccount', 'customer'])
@@ -308,7 +432,17 @@ class InvoicePaymentService
         }
 
         $payment = null;
-        if (! empty($sessionId)) {
+        if (! empty($paymentIntentId)) {
+            $payment = Payment::where('stripe_payment_intent_id', $paymentIntentId)
+                ->where('invoice_id', $invoice->id)
+                ->first();
+
+            if ($payment && $payment->status === PaymentStatus::Pending) {
+                $this->reconcilePaymentIntentWithStripe($payment);
+                $payment->refresh();
+                $invoice->refresh();
+            }
+        } elseif (! empty($sessionId)) {
             $payment = Payment::where('stripe_checkout_session_id', $sessionId)
                 ->where('invoice_id', $invoice->id)
                 ->first();
@@ -323,6 +457,15 @@ class InvoicePaymentService
 
         if (! $payment) {
             $payment = $invoice->payments()->latest('id')->first();
+            if ($payment && $payment->status === PaymentStatus::Pending) {
+                if (! empty($payment->stripe_payment_intent_id)) {
+                    $this->reconcilePaymentIntentWithStripe($payment);
+                } elseif (! empty($payment->stripe_checkout_session_id)) {
+                    $this->reconcileSessionWithStripe($payment);
+                }
+                $payment->refresh();
+                $invoice->refresh();
+            }
         }
 
         return [
@@ -348,6 +491,36 @@ class InvoicePaymentService
                 'failure_reason' => $payment->failure_reason,
             ] : null,
         ];
+    }
+
+    /**
+     * Reconcile a single pending payment intent with the Stripe API on the connected account.
+     */
+    public function reconcilePaymentIntentWithStripe(Payment $payment): void
+    {
+        if (empty($payment->stripe_payment_intent_id) || empty($payment->stripe_account_id)) {
+            return;
+        }
+
+        try {
+            $intent = $this->getClient()->paymentIntents->retrieve(
+                $payment->stripe_payment_intent_id,
+                [],
+                ['stripe_account' => $payment->stripe_account_id]
+            );
+
+            if ($intent->status === 'succeeded') {
+                $this->handlePaymentIntentSucceeded($intent->toArray(), $payment->stripe_account_id);
+            } elseif ($intent->status === 'canceled') {
+                $payment->status = PaymentStatus::Cancelled;
+                $payment->failure_reason = 'Payment intent was canceled.';
+                $payment->save();
+            } elseif ($intent->last_payment_error) {
+                $this->handlePaymentIntentFailed($intent->toArray(), $payment->stripe_account_id);
+            }
+        } catch (Throwable $e) {
+            Log::info("Payment intent reconciliation skipped for {$payment->stripe_payment_intent_id}: {$e->getMessage()}");
+        }
     }
 
     /**

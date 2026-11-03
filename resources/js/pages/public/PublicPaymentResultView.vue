@@ -223,8 +223,9 @@ const route = useRoute();
 const paymentStore = usePaymentStore();
 
 const token = computed(() => (route.params.token as string) || '');
+const paymentIntentId = computed(() => (route.query.payment_intent as string) || (route.query.payment_intent_id as string) || '');
 const sessionId = computed(() => (route.query.session_id as string) || '');
-const queryStatus = computed(() => (route.query.status as string) || '');
+const queryStatus = computed(() => (route.query.status as string) || (route.query.redirect_status as string) || '');
 const isCancelled = computed(() => queryStatus.value === 'cancelled' || route.query.cancelled === '1');
 
 const state = ref<ResultState>('verifying');
@@ -265,9 +266,10 @@ const pollPaymentStatus = async () => {
     }
 
     try {
+        const identifier = paymentIntentId.value || sessionId.value || undefined;
         const statusData: PublicPaymentStatus = await paymentStore.fetchPublicPaymentStatus(
             token.value,
-            sessionId.value || undefined
+            identifier
         );
 
         invoiceNumber.value = statusData.invoice_number;
@@ -316,9 +318,10 @@ const pollPaymentStatus = async () => {
 const handleManualRefresh = async () => {
     refreshing.value = true;
     try {
+        const identifier = paymentIntentId.value || sessionId.value || undefined;
         const statusData = await paymentStore.fetchPublicPaymentStatus(
             token.value,
-            sessionId.value || undefined
+            identifier
         );
         paymentInfo.value = statusData.payment;
         if (statusData.payment?.status === 'succeeded' || statusData.is_paid) {
@@ -333,9 +336,15 @@ const handleManualRefresh = async () => {
 };
 
 onMounted(() => {
-    // If explicitly cancelled by user on Stripe
+    // If explicitly cancelled by user
     if (isCancelled.value) {
         state.value = 'cancelled';
+        return;
+    }
+
+    if (queryStatus.value === 'failed') {
+        state.value = 'failed';
+        failureReason.value = 'Payment processing failed or was declined.';
         return;
     }
 

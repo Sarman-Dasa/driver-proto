@@ -262,3 +262,8 @@ Build frontend bundle:
 ```bash
 npm run build
 ```
+
+## Use locally 
+- **Email**: `cocofynix@mailinator.com`
+- **Password**: `Test@123
+`

@@ -69,6 +69,8 @@ export interface PublicInvoiceData {
     notes?: string | null;
     terms?: string | null;
     stripe_connect_ready: boolean;
+    stripe_publishable_key?: string | null;
+    stripe_account_id?: string | null;
     company: {
         name: string;
         email?: string | null;
@@ -81,6 +83,14 @@ export interface PublicInvoiceData {
         company_name?: string | null;
     };
     items: PublicInvoiceItem[];
+}
+
+export interface PaymentIntentResponse {
+    client_secret: string;
+    payment_intent_id: string;
+    payment_reference: string;
+    publishable_key: string;
+    stripe_account_id: string;
 }
 
 export interface PublicPaymentStatus {
